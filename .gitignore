@@ -1,0 +1,36 @@
+# Dependencias
+/vendor/
+
+# Entorno (¡NUNCA commitear!)
+.env
+
+# Storage local
+/storage/logs/*.log
+/storage/uploads/*
+/storage/cache/*
+!/storage/logs/.gitkeep
+!/storage/uploads/.gitkeep
+!/storage/cache/.gitkeep
+
+# Backups DB
+/database/backups/*.sql
+/database/backups/*.gz
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Archivos con credenciales locales
+datos.txt
+
+# PHPUnit cache
+.phpunit.result.cache
+
+# Compilados
+*.min.css.map
+*.min.js.map

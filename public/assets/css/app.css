@@ -1,0 +1,80 @@
+:root {
+    /* Tailwind Slate colors para el dark mode */
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --slate-950: #020617;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--slate-900);
+    color: var(--slate-200);
+}
+
+/* Utilidades personalizadas */
+.bg-slate-900 { background-color: var(--slate-900) !important; }
+.bg-slate-800 { background-color: var(--slate-800) !important; }
+.bg-slate-700 { background-color: var(--slate-700) !important; }
+.text-slate-200 { color: var(--slate-200) !important; }
+.text-slate-400 { color: var(--slate-400) !important; }
+.text-slate-600 { color: var(--slate-600) !important; }
+
+.hover-bg-slate-700:hover { background-color: var(--slate-700) !important; }
+.border-secondary { border-color: var(--slate-700) !important; }
+
+/* Wrapper y Sidebar */
+.wrapper {
+    display: flex;
+    width: 100%;
+}
+
+#sidebar {
+    min-width: 250px;
+    max-width: 250px;
+    transition: all 0.3s;
+}
+
+#sidebar.active {
+    margin-left: -250px;
+}
+
+@media (max-width: 991.98px) {
+    #sidebar {
+        margin-left: -250px;
+    }
+    #sidebar.active {
+        margin-left: 0;
+    }
+}
+
+/* Ajustes a componentes Bootstrap en modo oscuro */
+.card {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.table-dark {
+    --bs-table-bg: var(--slate-800);
+    --bs-table-striped-bg: var(--slate-900);
+    --bs-table-hover-bg: var(--slate-700);
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--slate-800);
+    color: var(--slate-100);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+}
+
+.input-group-text {
+    background-color: var(--slate-700);
+    border-color: var(--slate-700);
+    color: var(--slate-300);
+}

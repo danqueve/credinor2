@@ -1,0 +1,19 @@
+# Redirigir todo a index.php (excepto archivos y dirs existentes)
+<IfModule mod_rewrite.c>
+    Options -MultiViews
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# Seguridad: no listar directorios
+Options -Indexes
+
+# Headers de seguridad
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "DENY"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
