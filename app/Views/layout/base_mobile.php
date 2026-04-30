@@ -11,6 +11,9 @@ $user   = \App\Helpers\Auth::user();
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <link rel="manifest" href="<?= $appUrl ?>/manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -21,7 +24,10 @@ $user   = \App\Helpers\Auth::user();
         body { padding-bottom: 70px; }
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0; z-index: 1030;
-            background: #0f172a; border-top: 1px solid #334155;
+            background: linear-gradient(180deg, rgba(15,23,42,0.97) 0%, #0f172a 100%);
+            border-top: 1px solid rgba(51,65,85,0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             display: flex; justify-content: space-around; align-items: center;
             height: 60px;
         }
@@ -30,12 +36,23 @@ $user   = \App\Helpers\Auth::user();
             justify-content: center; color: #64748b; text-decoration: none;
             font-size: 0.65rem; gap: 2px; padding: 6px 0;
             transition: color .15s;
+            position: relative;
         }
-        .bottom-nav a.active, .bottom-nav a:hover { color: #38bdf8; }
+        .bottom-nav a.active, .bottom-nav a:hover { color: #60a5fa; }
+        .bottom-nav a.active::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 50%; transform: translateX(-50%);
+            width: 32px; height: 2px;
+            background: #3b82f6;
+            border-radius: 0 0 2px 2px;
+        }
         .bottom-nav a i { font-size: 1.35rem; }
         .page-header {
-            background: #0f172a; padding: 12px 16px 10px;
-            border-bottom: 1px solid #1e293b; position: sticky; top: 0; z-index: 100;
+            background: linear-gradient(180deg, var(--slate-800, #1e293b) 0%, rgba(15,23,42,0.97) 100%);
+            padding: 12px 16px 10px;
+            border-bottom: 1px solid rgba(51,65,85,0.6);
+            position: sticky; top: 0; z-index: 100;
         }
         .card { border-radius: 12px; }
         .list-item-touch { min-height: 56px; display: flex; align-items: center; }

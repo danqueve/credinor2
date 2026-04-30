@@ -68,7 +68,7 @@ class PersonalController
         $zona->id_cobrador_default = $id_cobrador;
 
         $id = $this->zonaRepo->insert($zona);
-        Audit::log('crear_zona', $id, "Zona creada: $nombre", $_SESSION['usuario_id']);
+        Audit::log('crear_zona', 'zonas', $id);
 
         $_SESSION['flash_success'] = 'Zona creada con éxito.';
         header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal');
@@ -114,7 +114,7 @@ class PersonalController
         $zona->id_cobrador_default = $id_cobrador;
 
         $this->zonaRepo->update($zona);
-        Audit::log('editar_zona', $id, "Zona editada: $nombre", $_SESSION['usuario_id']);
+        Audit::log('editar_zona', 'zonas', $id);
 
         $_SESSION['flash_success'] = 'Zona actualizada con éxito.';
         header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal');
@@ -153,7 +153,7 @@ class PersonalController
         }
 
         $id = $this->personalRepo->insert($empleado);
-        Audit::log('crear_personal', $id, "Empleado creado: {$empleado->nombre}", $_SESSION['usuario_id']);
+        Audit::log('crear_personal', 'personal', $id);
 
         $_SESSION['flash_success'] = 'Empleado creado con éxito.';
         header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal');
@@ -201,7 +201,7 @@ class PersonalController
         }
 
         $this->personalRepo->update($empleado);
-        Audit::log('editar_personal', $id, "Empleado editado: {$empleado->nombre}", $_SESSION['user']['id_usuario']);
+        Audit::log('editar_personal', 'personal', $id);
 
         $_SESSION['flash_success'] = 'Empleado actualizado con éxito.';
         header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal');

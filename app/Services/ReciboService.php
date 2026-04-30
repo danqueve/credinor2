@@ -50,6 +50,7 @@ class ReciboService
         $appUrl = $_ENV['APP_URL'] ?? '';
 
         $html = $this->buildHtml($datos);
+        error_log("ReciboService: HTML construido");
 
         $mpdf = new Mpdf([
             'mode'          => 'utf-8',
@@ -60,8 +61,13 @@ class ReciboService
             'margin_bottom' => 8,
         ]);
         $mpdf->SetTitle('Recibo ' . $numero);
+        error_log("ReciboService: Iniciando WriteHTML...");
         $mpdf->WriteHTML($html);
+        error_log("ReciboService: WriteHTML completado");
+
+        error_log("ReciboService: Guardando en " . $fullPath);
         $mpdf->Output($fullPath, 'F');
+        error_log("ReciboService: mPDF Output completado");
 
         return 'storage/recibos/' . $filename;
     }

@@ -94,8 +94,19 @@ class ClienteController
             exit;
         }
 
-        $id = $this->clienteRepo->insert($cliente);
-        Audit::log('crear_cliente', $id, "Cliente creado: {$cliente->nombre} (DNI: {$cliente->dni})", $_SESSION['usuario_id']);
+        try {
+            $id = $this->clienteRepo->insert($cliente);
+        } catch (\PDOException $e) {
+            if ($e->getCode() === '23000') {
+                $_SESSION['flash_error'] = "Ya existe un cliente registrado con el DNI {$cliente->dni}.";
+            } else {
+                $_SESSION['flash_error'] = 'Error al guardar el cliente. Intente nuevamente.';
+            }
+            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/clientes/nuevo');
+            exit;
+        }
+
+        Audit::log('crear_cliente', 'clientes', $id);
 
         $_SESSION['flash_success'] = 'Cliente registrado con éxito.';
         header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/clientes/ficha?id=' . $id);
@@ -136,8 +147,19 @@ class ClienteController
             exit;
         }
 
-        $this->clienteRepo->update($cliente);
-        Audit::log('editar_cliente', $id, "Cliente editado: {$cliente->nombre}", $_SESSION['usuario_id']);
+        try {
+            $this->clienteRepo->update($cliente);
+        } catch (\PDOException $e) {
+            if ($e->getCode() === '23000') {
+                $_SESSION['flash_error'] = "Ya existe otro cliente con el DNI {$cliente->dni}.";
+            } else {
+                $_SESSION['flash_error'] = 'Error al actualizar el cliente. Intente nuevamente.';
+            }
+            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/clientes/editar?id=' . $id);
+            exit;
+        }
+
+        Audit::log('editar_cliente', 'clientes', $id);
 
         $_SESSION['flash_success'] = 'Cliente actualizado con éxito.';
         header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/clientes/ficha?id=' . $id);

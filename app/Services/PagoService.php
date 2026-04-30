@@ -134,6 +134,7 @@ class PagoService
         $db->beginTransaction();
 
         try {
+            error_log("PagoService: Inicia transaccion");
             // 1. Insertar pago
             $pago = new Pago();
             $pago->id_credito        = $idCredito;
@@ -146,6 +147,7 @@ class PagoService
             $pago->created_by        = $usuarioId;
 
             $idPago = $this->pagoRepo->insert($pago);
+            error_log("PagoService: Pago insertado ID " . $idPago);
 
             // 2. Aplicar FIFO: actualizar cuotas y registrar en pago_cuotas
             foreach ($fifo['aplicaciones'] as $ap) {
@@ -171,6 +173,7 @@ class PagoService
                 $this->pagoRepo->updateCuota($ap['id_cuota'], $nuevoMontoPagado, $nuevoEstado, $nuevaFechaPagada);
                 $this->pagoRepo->insertPagoCuota($idPago, $ap['id_cuota'], $ap['monto_aplicado']);
             }
+            error_log("PagoService: FIFO aplicado");
 
             // 3. Recalcular saldo del crédito
             $nuevoSaldo   = $this->pagoRepo->recalcularSaldoCredito($idCredito);
@@ -191,6 +194,7 @@ class PagoService
                     fn($ap) => '#' . $ap['numero_cuota'],
                     $fifo['aplicaciones']
                 ));
+                error_log("PagoService: Generando PDF...");
                 $pdfPath = (new ReciboService())->generar([
                     'numero_recibo'      => $numeroRecibo,
                     'codigo_credito'     => $credito->codigo,
@@ -204,8 +208,10 @@ class PagoService
                     'cuotas_aplicadas'   => $cuotasStr,
                     'referencia_externa' => $refExterna,
                 ]);
+                error_log("PagoService: PDF generado en " . $pdfPath);
                 $this->pagoRepo->updateReciboPdfPath($idRecibo, $pdfPath);
-            } catch (\Throwable) {
+            } catch (\Throwable $e) {
+                error_log("PagoService: Error PDF: " . $e->getMessage());
                 // PDF fallido no impide el pago ya confirmado
             }
 
@@ -227,6 +233,7 @@ class PagoService
             ];
 
         } catch (\Throwable $e) {
+            error_log("PagoService FATAL: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
             $db->rollBack();
             return ['ok' => false, 'message' => 'Error interno al registrar el pago. Intente de nuevo.'];
         }

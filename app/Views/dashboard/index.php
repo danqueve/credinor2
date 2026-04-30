@@ -13,26 +13,12 @@ ob_start();
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="card bg-slate-800 border-secondary h-100">
             <div class="card-body d-flex align-items-center">
-                <div class="bg-primary bg-opacity-10 rounded p-3 me-3 text-primary">
-                    <i class="bi bi-people-fill fs-3"></i>
+                <div class="stat-card-icon icon-primary me-3">
+                    <i class="bi bi-people-fill"></i>
                 </div>
                 <div>
-                    <h6 class="card-title text-secondary mb-1">Clientes Activos</h6>
-                    <h3 class="mb-0 fw-bold"><?= number_format($stats['clientes_activos'] ?? 0, 0, ',', '.') ?></h3>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="card bg-slate-800 border-secondary h-100">
-            <div class="card-body d-flex align-items-center">
-                <div class="bg-success bg-opacity-10 rounded p-3 me-3 text-success">
-                    <i class="bi bi-cash-stack fs-3"></i>
-                </div>
-                <div>
-                    <h6 class="card-title text-secondary mb-1">Créditos Activos</h6>
-                    <h3 class="mb-0 fw-bold"><?= number_format($stats['creditos_activos'] ?? 0, 0, ',', '.') ?></h3>
+                    <p class="text-secondary small mb-0 fw-500">Clientes Activos</p>
+                    <div class="kpi-value"><?= number_format($stats['clientes_activos'] ?? 0, 0, ',', '.') ?></div>
                 </div>
             </div>
         </div>
@@ -41,12 +27,12 @@ ob_start();
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="card bg-slate-800 border-secondary h-100">
             <div class="card-body d-flex align-items-center">
-                <div class="bg-warning bg-opacity-10 rounded p-3 me-3 text-warning">
-                    <i class="bi bi-exclamation-triangle-fill fs-3"></i>
+                <div class="stat-card-icon icon-success me-3">
+                    <i class="bi bi-cash-stack"></i>
                 </div>
                 <div>
-                    <h6 class="card-title text-secondary mb-1">Cuotas a vencer hoy</h6>
-                    <h3 class="mb-0 fw-bold"><?= number_format($stats['cuotas_vencer_hoy'] ?? 0, 0, ',', '.') ?></h3>
+                    <p class="text-secondary small mb-0">Créditos Activos</p>
+                    <div class="kpi-value"><?= number_format($stats['creditos_activos'] ?? 0, 0, ',', '.') ?></div>
                 </div>
             </div>
         </div>
@@ -55,12 +41,26 @@ ob_start();
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="card bg-slate-800 border-secondary h-100">
             <div class="card-body d-flex align-items-center">
-                <div class="bg-info bg-opacity-10 rounded p-3 me-3 text-info">
-                    <i class="bi bi-graph-up-arrow fs-3"></i>
+                <div class="stat-card-icon icon-warning me-3">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
                 </div>
                 <div>
-                    <h6 class="card-title text-secondary mb-1">Cobranza del día</h6>
-                    <h3 class="mb-0 fw-bold">$<?= number_format($stats['cobranza_dia'] ?? 0, 2, ',', '.') ?></h3>
+                    <p class="text-secondary small mb-0">Cuotas a vencer hoy</p>
+                    <div class="kpi-value"><?= number_format($stats['cuotas_vencer_hoy'] ?? 0, 0, ',', '.') ?></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card bg-slate-800 border-secondary h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="stat-card-icon icon-info me-3">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div>
+                    <p class="text-secondary small mb-0">Cobranza del día</p>
+                    <div class="kpi-value" style="font-size:1.5rem;">$<?= number_format($stats['cobranza_dia'] ?? 0, 2, ',', '.') ?></div>
                 </div>
             </div>
         </div>
@@ -71,7 +71,7 @@ ob_start();
     <!-- Gráfico cobranza semanal -->
     <div class="col-12 col-xl-8">
         <div class="card bg-slate-800 border-secondary">
-            <div class="card-header bg-transparent border-secondary py-3">
+            <div class="card-header card-header-info py-3">
                 <h5 class="mb-0 fw-bold text-light"><i class="bi bi-bar-chart-line text-info me-2"></i>Cobranza — últimos 7 días</h5>
             </div>
             <div class="card-body">
@@ -83,7 +83,7 @@ ob_start();
     <!-- Gráfico estado cartera -->
     <div class="col-12 col-xl-4">
         <div class="card bg-slate-800 border-secondary">
-            <div class="card-header bg-transparent border-secondary py-3">
+            <div class="card-header card-header-warning py-3">
                 <h5 class="mb-0 fw-bold text-light"><i class="bi bi-pie-chart text-warning me-2"></i>Estado de Cartera</h5>
             </div>
             <div class="card-body d-flex align-items-center justify-content-center">
@@ -97,7 +97,7 @@ ob_start();
 <div class="row g-4 mb-4">
     <div class="col-12 col-xl-6">
         <div class="card bg-slate-800 border-secondary">
-            <div class="card-header bg-transparent border-secondary py-3">
+            <div class="card-header card-header-danger py-3">
                 <h5 class="mb-0 fw-bold text-light"><i class="bi bi-hourglass-split text-danger me-2"></i>Aging Cartera Vencida</h5>
             </div>
             <div class="card-body">
@@ -107,7 +107,7 @@ ob_start();
     </div>
     <div class="col-12 col-xl-6">
         <div class="card bg-slate-800 border-secondary">
-            <div class="card-header bg-transparent border-secondary py-3">
+            <div class="card-header card-header-success py-3">
                 <h5 class="mb-0 fw-bold text-light"><i class="bi bi-currency-dollar text-success me-2"></i>Saldo vs Capital</h5>
             </div>
             <div class="card-body d-flex align-items-center justify-content-center">
@@ -121,7 +121,7 @@ ob_start();
     <!-- Próximos Vencimientos -->
     <div class="col-12 col-xl-8">
         <div class="card bg-slate-800 border-secondary">
-            <div class="card-header bg-transparent border-secondary py-3 d-flex justify-content-between align-items-center">
+            <div class="card-header card-header-warning py-3 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold text-light"><i class="bi bi-calendar-event text-warning me-2"></i> Próximos Vencimientos</h5>
                 <a href="<?= $appUrl ?>/reportes/vencimientos" class="btn btn-sm btn-outline-secondary">Ver todos</a>
             </div>
@@ -162,7 +162,7 @@ ob_start();
     <!-- Actividad Reciente -->
     <div class="col-12 col-xl-4">
         <div class="card bg-slate-800 border-secondary">
-            <div class="card-header bg-transparent border-secondary py-3">
+            <div class="card-header card-header-info py-3">
                 <h5 class="mb-0 fw-bold text-light"><i class="bi bi-clock-history text-info me-2"></i> Actividad Reciente</h5>
             </div>
             <div class="card-body p-0">

@@ -4,7 +4,12 @@ ob_start();
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="h3 mb-0 text-white fw-bold"><?= htmlspecialchars($titulo) ?></h2>
+    <div>
+        <h2 class="h3 mb-0 fw-bold text-white"><?= htmlspecialchars($titulo) ?></h2>
+        <p class="text-secondary small mb-0 mt-1">
+            <i class="bi bi-people me-1"></i> Gestión de clientes activos
+        </p>
+    </div>
     <?php if($_SESSION['usuario_rol'] === 'admin'): ?>
         <a href="<?= $appUrl ?>/clientes/nuevo" class="btn btn-primary">
             <i class="bi bi-person-plus-fill me-1"></i> Nuevo Cliente
@@ -85,17 +90,17 @@ ob_start();
                                 <td><?= htmlspecialchars($c->telefono ?? 'S/D') ?></td>
                                 <td>
                                     <?php if($c->zona_nombre): ?>
-                                        <span class="badge bg-secondary"><?= htmlspecialchars($c->zona_nombre) ?></span>
+                                        <span class="badge badge-zona"><?= htmlspecialchars($c->zona_nombre) ?></span>
                                     <?php else: ?>
                                         <span class="text-muted fst-italic">Sin zona</span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-end">
-                                    <a href="<?= $appUrl ?>/clientes/ficha?id=<?= $c->id_cliente ?>" class="btn btn-sm btn-outline-light me-1" title="Ver Ficha">
+                                    <a href="<?= $appUrl ?>/clientes/ficha?id=<?= $c->id_cliente ?>" class="btn btn-sm btn-outline-light me-1" data-bs-toggle="tooltip" title="Ver Ficha">
                                         <i class="bi bi-person-vcard"></i>
                                     </a>
                                     <?php if($_SESSION['usuario_rol'] === 'admin'): ?>
-                                        <a href="<?= $appUrl ?>/clientes/editar?id=<?= $c->id_cliente ?>" class="btn btn-sm btn-outline-info" title="Editar">
+                                        <a href="<?= $appUrl ?>/clientes/editar?id=<?= $c->id_cliente ?>" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                     <?php endif; ?>
@@ -169,6 +174,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!input.contains(e.target) && !results.contains(e.target)) {
             results.classList.add('d-none');
         }
+    });
+
+    // Tooltips
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+        new bootstrap.Tooltip(el);
     });
 });
 </script>

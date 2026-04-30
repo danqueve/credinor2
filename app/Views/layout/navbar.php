@@ -1,16 +1,35 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-slate-800 border-bottom border-secondary mb-4">
+<nav class="navbar navbar-expand-lg navbar-dark app-navbar mb-4">
     <div class="container-fluid">
         <button type="button" id="sidebarCollapse" class="btn btn-primary d-lg-none">
             <i class="bi bi-list"></i>
         </button>
-        
+
+        <!-- Breadcrumb (solo desktop) -->
+        <div class="ms-3 d-none d-lg-flex align-items-center">
+            <?php if (isset($titulo)): ?>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="<?= $appUrl ?>/dashboard" class="text-secondary text-decoration-none">
+                                <i class="bi bi-house-door"></i>
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active text-slate-400" aria-current="page" style="color:var(--slate-400);">
+                            <?= htmlspecialchars($titulo) ?>
+                        </li>
+                    </ol>
+                </nav>
+            <?php endif; ?>
+        </div>
+
         <div class="ms-auto d-flex align-items-center">
             <div class="dropdown">
-                <a class="nav-link dropdown-toggle text-light d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
-                        <span class="text-white fw-bold"><?= strtoupper(substr($user['username'], 0, 1)) ?></span>
+                <a class="nav-link dropdown-toggle text-light d-flex align-items-center gap-2" href="#"
+                   id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="user-avatar">
+                        <?= strtoupper(substr($user['username'], 0, 1)) ?>
                     </div>
-                    <span><?= htmlspecialchars($user['username']) ?></span>
+                    <span class="d-none d-md-inline"><?= htmlspecialchars($user['username']) ?></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark bg-slate-800 border-secondary" aria-labelledby="navbarDropdown">
                     <li><h6 class="dropdown-header">Rol: <?= ucfirst($user['rol']) ?></h6></li>
