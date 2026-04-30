@@ -19,4 +19,16 @@ class Cliente
 
     // Relaciones
     public ?string $zona_nombre = null;
+
+    // Stats calculadas en listado
+    public int $creditos_activos  = 0;
+    public int $total_pagos       = 0;
+    // Crédito principal activo
+    public ?int $id_credito       = null;
+    public ?string $credito_codigo = null;
+    public float $credito_saldo   = 0.0;
+    public int $cuotas_pagadas    = 0;
+    public int $cuotas_total      = 0;
+    public ?float $monto_cuota    = null;
+    public ?string $proxima_cuota = null;
 }

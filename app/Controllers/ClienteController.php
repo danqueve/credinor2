@@ -39,11 +39,12 @@ class ClienteController
         $totalPages = ceil($total / $limit);
 
         View::render('clientes/index', [
-            'titulo' => 'Gestión de Clientes',
-            'clientes' => $clientes,
-            'search' => $search,
-            'page' => $page,
-            'totalPages' => $totalPages
+            'titulo'     => 'Gestión de Clientes',
+            'clientes'   => $clientes,
+            'search'     => $search,
+            'page'       => $page,
+            'totalPages' => $totalPages,
+            'total'      => $total,
         ]);
     }
 

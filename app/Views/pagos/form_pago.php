@@ -306,6 +306,7 @@ ob_start();
         </div>
 
         <form method="POST" action="<?= $appUrl ?>/pagos/store"
+              x-ref="pagoForm"
               @submit.prevent="confirmarYEnviar()">
             <input type="hidden" name="csrf_token" value="<?= \App\Helpers\Csrf::getToken() ?>">
             <input type="hidden" name="id_credito" x-model="idCredito">
@@ -403,8 +404,7 @@ ob_start();
                                         </span>
                                         <input type="date" name="fecha_pago_real" required
                                                class="form-control bg-slate-900 border-secondary text-light"
-                                               x-model="fechaPagoReal"
-                                               :max="hoy">
+                                               x-model="fechaPagoReal">
                                     </div>
                                     <div class="form-text text-secondary small">
                                         Cuándo el cliente entregó el dinero.
@@ -618,7 +618,7 @@ function pagoForm() {
         monto: '',
         fechaPagoReal: '',
         formaPago: 'efectivo',
-        hoy: new Date().toISOString().split('T')[0],
+        hoy: (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); })(),
         fifoAplicaciones: [],
         montoRestante: 0,
         saldoTrasP: 0,
@@ -781,7 +781,7 @@ function pagoForm() {
         enviarFormulario() {
             this.submitting = true;
             bootstrap.Modal.getInstance(document.getElementById('modalConfirmar'))?.hide();
-            this.$el.querySelector('form').submit();
+            this.$refs.pagoForm.submit();
         },
 
         fmt(n) {

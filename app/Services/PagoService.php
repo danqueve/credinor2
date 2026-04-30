@@ -89,11 +89,6 @@ class PagoService
             $errors[] = 'Fecha de pago real inválida.';
         }
 
-        // RN-02: fecha_pago_real ≤ hoy
-        if ($fechaDt && $fechaDt > new \DateTime('today')) {
-            $errors[] = 'La fecha de pago real no puede ser futura.';
-        }
-
         if (!empty($errors)) {
             return ['ok' => false, 'message' => implode(' ', $errors), 'errors' => $errors];
         }

@@ -23,34 +23,77 @@ class ClienteRepository
     public function findAll(int $limit = 100, int $offset = 0, string $search = ''): array
     {
         $sql = "
-            SELECT c.*, z.nombre as zona_nombre 
+            SELECT
+                c.*,
+                z.nombre                          AS zona_nombre,
+                COALESCE(crs.creditos_activos, 0) AS creditos_activos,
+                COALESCE(ps.total_pagos,       0) AS total_pagos,
+                cr.id_credito,
+                cr.codigo                         AS credito_codigo,
+                COALESCE(cr.saldo_pendiente,   0) AS credito_saldo,
+                COALESCE(cpg.cnt,              0) AS cuotas_pagadas,
+                COALESCE(ctot.cnt,             0) AS cuotas_total,
+                (SELECT cu.monto_esperado
+                 FROM cuotas cu
+                 WHERE cu.id_credito = cr.id_credito
+                   AND cu.estado IN ('pendiente','vencida','parcial')
+                 ORDER BY cu.numero_cuota ASC LIMIT 1)   AS monto_cuota,
+                (SELECT cu.fecha_vencimiento
+                 FROM cuotas cu
+                 WHERE cu.id_credito = cr.id_credito
+                   AND cu.estado IN ('pendiente','vencida','parcial')
+                 ORDER BY cu.numero_cuota ASC LIMIT 1)   AS proxima_cuota
             FROM clientes c
             LEFT JOIN zonas z ON c.id_zona = z.id_zona
+            LEFT JOIN creditos cr
+                   ON cr.id_credito = (
+                       SELECT MAX(id_credito) FROM creditos
+                       WHERE id_cliente = c.id_cliente AND estado = 'activo'
+                   )
+            LEFT JOIN (
+                SELECT id_cliente, COUNT(*) AS creditos_activos
+                FROM creditos WHERE estado = 'activo'
+                GROUP BY id_cliente
+            ) crs ON crs.id_cliente = c.id_cliente
+            LEFT JOIN (
+                SELECT cr2.id_cliente, COUNT(p.id_pago) AS total_pagos
+                FROM pagos p
+                JOIN creditos cr2 ON p.id_credito = cr2.id_credito
+                WHERE p.anulado = 0
+                GROUP BY cr2.id_cliente
+            ) ps ON ps.id_cliente = c.id_cliente
+            LEFT JOIN (
+                SELECT id_credito, COUNT(*) AS cnt
+                FROM cuotas WHERE estado = 'pagada'
+                GROUP BY id_credito
+            ) cpg ON cpg.id_credito = cr.id_credito
+            LEFT JOIN (
+                SELECT id_credito, COUNT(*) AS cnt
+                FROM cuotas
+                GROUP BY id_credito
+            ) ctot ON ctot.id_credito = cr.id_credito
             WHERE c.deleted_at IS NULL
         ";
-        $params = [];
 
         if (!empty($search)) {
             $sql .= " AND (c.nombre LIKE ? OR c.dni LIKE ?)";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
         }
 
-        $sql .= " ORDER BY c.id_cliente DESC LIMIT ? OFFSET ?";
-        
-        $stmt = $this->db->prepare($sql);
-        
-        // Bind params para LIKE si existen
+        $sql .= " ORDER BY c.nombre ASC LIMIT ? OFFSET ?";
+
+        $stmt       = $this->db->prepare($sql);
         $paramIndex = 1;
+
         if (!empty($search)) {
-            $stmt->bindValue($paramIndex++, "%$search%", PDO::PARAM_STR);
-            $stmt->bindValue($paramIndex++, "%$search%", PDO::PARAM_STR);
+            $like = "%$search%";
+            $stmt->bindValue($paramIndex++, $like, PDO::PARAM_STR);
+            $stmt->bindValue($paramIndex++, $like, PDO::PARAM_STR);
         }
-        $stmt->bindValue($paramIndex++, $limit, PDO::PARAM_INT);
-        $stmt->bindValue($paramIndex, $offset, PDO::PARAM_INT);
-        
+        $stmt->bindValue($paramIndex++, $limit,  PDO::PARAM_INT);
+        $stmt->bindValue($paramIndex,   $offset, PDO::PARAM_INT);
+
         $stmt->execute();
-        
+
         $clientes = [];
         while ($row = $stmt->fetch()) {
             $clientes[] = $this->hydrate($row);
@@ -183,17 +226,26 @@ class ClienteRepository
     private function hydrate(array $row): Cliente
     {
         $c = new Cliente();
-        $c->id_cliente = (int)$row['id_cliente'];
-        $c->nombre = $row['nombre'];
-        $c->dni = $row['dni'];
-        $c->direccion = $row['direccion'] ?? null;
-        $c->barrio = $row['barrio'] ?? null;
-        $c->telefono = $row['telefono'] ?? null;
+        $c->id_cliente      = (int)$row['id_cliente'];
+        $c->nombre          = $row['nombre'];
+        $c->dni             = $row['dni'];
+        $c->direccion       = $row['direccion']       ?? null;
+        $c->barrio          = $row['barrio']          ?? null;
+        $c->telefono        = $row['telefono']        ?? null;
         $c->coordenadas_gps = $row['coordenadas_gps'] ?? null;
-        $c->id_zona = $row['id_zona'] ? (int)$row['id_zona'] : null;
-        $c->foto_url = $row['foto_url'] ?? null;
-        $c->referencias = $row['referencias'] ?? null;
-        $c->zona_nombre = $row['zona_nombre'] ?? null;
+        $c->id_zona         = $row['id_zona'] ? (int)$row['id_zona'] : null;
+        $c->foto_url        = $row['foto_url']        ?? null;
+        $c->referencias     = $row['referencias']     ?? null;
+        $c->zona_nombre     = $row['zona_nombre']     ?? null;
+        $c->creditos_activos  = (int)($row['creditos_activos']  ?? 0);
+        $c->total_pagos       = (int)($row['total_pagos']      ?? 0);
+        $c->id_credito        = isset($row['id_credito'])       ? (int)$row['id_credito']  : null;
+        $c->credito_codigo    = $row['credito_codigo']          ?? null;
+        $c->credito_saldo     = (float)($row['credito_saldo']   ?? 0);
+        $c->cuotas_pagadas    = (int)($row['cuotas_pagadas']    ?? 0);
+        $c->cuotas_total      = (int)($row['cuotas_total']      ?? 0);
+        $c->monto_cuota       = isset($row['monto_cuota'])      ? (float)$row['monto_cuota'] : null;
+        $c->proxima_cuota     = $row['proxima_cuota']           ?? null;
         return $c;
     }
 }
