@@ -52,8 +52,9 @@ class DashboardRepository
                 cu.fecha_vencimiento,
                 cu.monto_esperado,
                 cu.monto_pagado,
-                cr.codigo  AS credito_codigo,
-                cl.nombre  AS cliente_nombre,
+                cr.codigo   AS credito_codigo,
+                cl.nombre   AS cliente_nombre,
+                cl.apellido AS cliente_apellido,
                 cl.id_cliente
             FROM cuotas cu
             JOIN creditos cr ON cu.id_credito = cr.id_credito
