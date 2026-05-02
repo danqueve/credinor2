@@ -49,6 +49,7 @@ return [
 
         // Reportes
         '/reportes'                    => [\App\Controllers\ReporteController::class, 'index'],
+        '/reportes/vencimientos'       => [\App\Controllers\ReporteController::class, 'vencimientos'],
         '/reportes/exportar/cobranza' => [\App\Controllers\ReporteController::class, 'exportCobranza'],
         '/reportes/exportar/atraso'   => [\App\Controllers\ReporteController::class, 'exportAtraso'],
 

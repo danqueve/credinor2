@@ -212,6 +212,52 @@ class ReporteRepository
     }
 
     /**
+     * Próximos vencimientos: una fila por cliente (su cuota más cercana pendiente).
+     */
+    public function getProximosVencimientos(int $dias = 30): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT
+                cl.id_cliente,
+                cl.nombre  AS cliente_nombre,
+                cl.dni,
+                cl.telefono,
+                cr.id_credito,
+                cr.codigo  AS credito_codigo,
+                cr.saldo_pendiente,
+                cu.numero_cuota,
+                cu.fecha_vencimiento,
+                cu.monto_esperado,
+                cu.monto_pagado,
+                cu.estado  AS cuota_estado,
+                DATEDIFF(cu.fecha_vencimiento, CURDATE()) AS dias_para_vencer,
+                z.nombre   AS zona_nombre
+            FROM cuotas cu
+            JOIN creditos cr ON cu.id_credito = cr.id_credito
+            JOIN clientes cl ON cr.id_cliente  = cl.id_cliente
+            LEFT JOIN zonas z ON cl.id_zona = z.id_zona
+            WHERE cu.id_cuota = (
+                SELECT cu2.id_cuota
+                FROM cuotas cu2
+                JOIN creditos cr2 ON cu2.id_credito = cr2.id_credito
+                WHERE cr2.id_cliente = cl.id_cliente
+                  AND cr2.estado = 'activo'
+                  AND cr2.deleted_at IS NULL
+                  AND cu2.estado IN ('pendiente','parcial','vencida')
+                ORDER BY cu2.fecha_vencimiento ASC, cu2.id_cuota ASC
+                LIMIT 1
+            )
+              AND cr.estado = 'activo'
+              AND cr.deleted_at IS NULL
+              AND cu.fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL ? DAY)
+            ORDER BY cu.fecha_vencimiento ASC
+        ");
+        $stmt->bindValue(1, $dias, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Capital prestado vs recuperado en un periodo.
      */
     public function getCapitalVsRecuperado(string $desde, string $hasta): array

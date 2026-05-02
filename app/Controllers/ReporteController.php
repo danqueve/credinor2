@@ -41,6 +41,18 @@ class ReporteController
         ]);
     }
 
+    public function vencimientos(): void
+    {
+        Auth::requireAdmin();
+        $dias = max(1, min(365, (int)($_GET['dias'] ?? 30)));
+
+        View::render('reportes/vencimientos', [
+            'titulo'      => 'Próximos Vencimientos',
+            'vencimientos' => $this->service->getProximosVencimientos($dias),
+            'dias'        => $dias,
+        ]);
+    }
+
     public function exportCobranza(): void
     {
         Auth::requireAdmin();

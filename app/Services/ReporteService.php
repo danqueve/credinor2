@@ -54,6 +54,11 @@ class ReporteService
         return $this->repo->getClientesConAtraso();
     }
 
+    public function getProximosVencimientos(int $dias = 30): array
+    {
+        return $this->repo->getProximosVencimientos($dias);
+    }
+
     public function getCapitalVsRecuperado(string $desde, string $hasta): array
     {
         return $this->repo->getCapitalVsRecuperado($desde, $hasta);
