@@ -77,6 +77,7 @@ return [
     // ─── Rutas POST ───────────────────────────────────────────────────────
     'POST' => [
         '/login'                    => [\App\Controllers\AuthController::class, 'handleLogin'],
+        '/logout'                   => [\App\Controllers\AuthController::class, 'logout'],
         '/auth/totp'                => [\App\Controllers\AuthController::class, 'handleTotp'],
         '/perfil/2fa/activar'       => [\App\Controllers\AuthController::class, 'confirmarSetup2fa'],
         '/perfil/2fa/iniciar'       => [\App\Controllers\AuthController::class, 'iniciarSetup2fa'],
