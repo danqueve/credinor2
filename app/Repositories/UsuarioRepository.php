@@ -17,45 +17,29 @@ class UsuarioRepository
         $this->db = Database::getInstance();
     }
 
+    /** @return array<int, array<string,mixed>> */
+    public function findAll(): array
+    {
+        $stmt = $this->db->query("
+            SELECT u.*,
+                   p.nombre AS personal_nombre,
+                   c.nombre AS cliente_nombre,
+                   c.dni    AS cliente_dni
+            FROM usuarios u
+            LEFT JOIN personal p ON u.id_personal = p.id_personal
+            LEFT JOIN clientes c ON u.id_cliente  = c.id_cliente
+            WHERE u.deleted_at IS NULL
+            ORDER BY FIELD(u.rol,'admin','cobrador','cliente'), u.username ASC
+        ");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function findByUsername(string $username): ?Usuario
     {
         $stmt = $this->db->prepare("SELECT * FROM usuarios WHERE username = ? AND deleted_at IS NULL");
         $stmt->execute([$username]);
         $row = $stmt->fetch();
-
-        if (!$row) {
-            return null;
-        }
-
-        $user = new Usuario();
-        $user->id_usuario = (int)$row['id_usuario'];
-        $user->username = $row['username'];
-        $user->password_hash = $row['password_hash'];
-        $user->rol = $row['rol'];
-        $user->id_personal = $row['id_personal'] ? (int)$row['id_personal'] : null;
-        $user->activo = (bool)$row['activo'];
-        $user->ultimo_login = $row['ultimo_login'];
-        $user->intentos_fallidos = (int)$row['intentos_fallidos'];
-        $user->bloqueado_hasta = $row['bloqueado_hasta'];
-        $user->totp_secret     = $row['totp_secret'] ?? null;
-
-        return $user;
-    }
-
-    public function updateLastLogin(int $id): void
-    {
-        $stmt = $this->db->prepare("
-            UPDATE usuarios 
-            SET ultimo_login = NOW(), intentos_fallidos = 0, bloqueado_hasta = NULL 
-            WHERE id_usuario = ?
-        ");
-        $stmt->execute([$id]);
-    }
-
-    public function saveTotpSecret(int $id, ?string $secret): void
-    {
-        $stmt = $this->db->prepare("UPDATE usuarios SET totp_secret = ? WHERE id_usuario = ?");
-        $stmt->execute([$secret, $id]);
+        return $row ? $this->hydrate($row) : null;
     }
 
     public function findById(int $id): ?Usuario
@@ -63,34 +47,99 @@ class UsuarioRepository
         $stmt = $this->db->prepare("SELECT * FROM usuarios WHERE id_usuario = ? AND deleted_at IS NULL");
         $stmt->execute([$id]);
         $row = $stmt->fetch();
-        if (!$row) {
-            return null;
+        return $row ? $this->hydrate($row) : null;
+    }
+
+    public function findByCliente(int $idCliente): ?Usuario
+    {
+        $stmt = $this->db->prepare("
+            SELECT * FROM usuarios
+            WHERE id_cliente = ? AND rol = 'cliente' AND deleted_at IS NULL
+            LIMIT 1
+        ");
+        $stmt->execute([$idCliente]);
+        $row = $stmt->fetch();
+        return $row ? $this->hydrate($row) : null;
+    }
+
+    public function insert(string $username, string $passwordHash, string $rol, ?int $idPersonal, ?int $idCliente, bool $activo): int
+    {
+        $stmt = $this->db->prepare("
+            INSERT INTO usuarios (username, password_hash, rol, id_personal, id_cliente, activo)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([$username, $passwordHash, $rol, $idPersonal, $idCliente, $activo ? 1 : 0]);
+        return (int)$this->db->lastInsertId();
+    }
+
+    public function update(int $id, string $username, ?string $passwordHash, string $rol, ?int $idPersonal, ?int $idCliente, bool $activo): void
+    {
+        if ($passwordHash !== null) {
+            $stmt = $this->db->prepare("
+                UPDATE usuarios
+                SET username=?, password_hash=?, rol=?, id_personal=?, id_cliente=?, activo=?
+                WHERE id_usuario=?
+            ");
+            $stmt->execute([$username, $passwordHash, $rol, $idPersonal, $idCliente, $activo ? 1 : 0, $id]);
+        } else {
+            $stmt = $this->db->prepare("
+                UPDATE usuarios
+                SET username=?, rol=?, id_personal=?, id_cliente=?, activo=?
+                WHERE id_usuario=?
+            ");
+            $stmt->execute([$username, $rol, $idPersonal, $idCliente, $activo ? 1 : 0, $id]);
         }
-        $user = new Usuario();
-        $user->id_usuario        = (int)$row['id_usuario'];
-        $user->username          = $row['username'];
-        $user->password_hash     = $row['password_hash'];
-        $user->rol               = $row['rol'];
-        $user->id_personal       = $row['id_personal'] ? (int)$row['id_personal'] : null;
-        $user->activo            = (bool)$row['activo'];
-        $user->ultimo_login      = $row['ultimo_login'];
-        $user->intentos_fallidos = (int)$row['intentos_fallidos'];
-        $user->bloqueado_hasta   = $row['bloqueado_hasta'];
-        $user->totp_secret       = $row['totp_secret'] ?? null;
-        return $user;
+    }
+
+    public function softDelete(int $id): void
+    {
+        $this->db->prepare("UPDATE usuarios SET deleted_at = NOW() WHERE id_usuario = ?")
+                 ->execute([$id]);
+    }
+
+    public function updateLastLogin(int $id): void
+    {
+        $this->db->prepare("
+            UPDATE usuarios
+            SET ultimo_login = NOW(), intentos_fallidos = 0, bloqueado_hasta = NULL
+            WHERE id_usuario = ?
+        ")->execute([$id]);
+    }
+
+    public function saveTotpSecret(int $id, ?string $secret): void
+    {
+        $this->db->prepare("UPDATE usuarios SET totp_secret = ? WHERE id_usuario = ?")
+                 ->execute([$secret, $id]);
     }
 
     public function incrementIntentosFallidos(int $id, int $maxIntentos, int $bloqueoMinutos): void
     {
         $stmt = $this->db->prepare("
-            UPDATE usuarios 
+            UPDATE usuarios
             SET intentos_fallidos = intentos_fallidos + 1,
-                bloqueado_hasta = CASE 
+                bloqueado_hasta = CASE
                     WHEN intentos_fallidos + 1 >= ? THEN DATE_ADD(NOW(), INTERVAL ? MINUTE)
-                    ELSE bloqueado_hasta 
+                    ELSE bloqueado_hasta
                 END
             WHERE id_usuario = ?
         ");
         $stmt->execute([$maxIntentos, $bloqueoMinutos, $id]);
+    }
+
+    private function hydrate(array $row): Usuario
+    {
+        $user = new Usuario();
+        $user->id_usuario        = (int)$row['id_usuario'];
+        $user->username          = $row['username'];
+        $user->password_hash     = $row['password_hash'];
+        $user->rol               = $row['rol'];
+        $user->id_personal       = isset($row['id_personal'])  ? (int)$row['id_personal']  : null;
+        $user->id_cliente        = isset($row['id_cliente'])   ? (int)$row['id_cliente']   : null;
+        $user->activo            = (bool)$row['activo'];
+        $user->ultimo_login      = $row['ultimo_login']      ?? null;
+        $user->intentos_fallidos = (int)($row['intentos_fallidos'] ?? 0);
+        $user->bloqueado_hasta   = $row['bloqueado_hasta']   ?? null;
+        $user->totp_secret       = $row['totp_secret']       ?? null;
+        return $user;
     }
 }

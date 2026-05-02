@@ -11,6 +11,7 @@ class Usuario
     public string $password_hash;
     public string $rol;
     public ?int $id_personal;
+    public ?int $id_cliente;
     public bool $activo;
     public ?string $ultimo_login;
     public int $intentos_fallidos;

@@ -62,7 +62,13 @@ class AuthController
         }
 
         if ($result['ok']) {
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/dashboard');
+            $rol = $_SESSION['usuario_rol'] ?? 'cobrador';
+            $dest = match ($rol) {
+                'cliente'  => '/mi-cuenta',
+                'cobrador' => '/consulta',
+                default    => '/dashboard',
+            };
+            header('Location: ' . ($_ENV['APP_URL'] ?? '') . $dest);
             exit;
         }
 
@@ -95,6 +101,7 @@ class AuthController
         $result = $this->authService->verifyTotp($code);
 
         if ($result['ok']) {
+            // TOTP solo es para admin
             header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/dashboard');
             exit;
         }

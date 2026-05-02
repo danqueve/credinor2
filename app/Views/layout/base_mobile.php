@@ -81,23 +81,37 @@ $user   = \App\Helpers\Auth::user();
 
 <!-- Navegación inferior (bottom nav) -->
 <nav class="bottom-nav">
-    <?php $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); ?>
-    <a href="<?= $appUrl ?>/consulta" class="<?= str_ends_with($path, '/consulta') ? 'active' : '' ?>">
-        <i class="bi bi-house-door"></i>
-        <span>Inicio</span>
-    </a>
-    <a href="<?= $appUrl ?>/consulta/buscar" class="<?= str_contains($path, '/buscar') ? 'active' : '' ?>">
-        <i class="bi bi-search"></i>
-        <span>Buscar</span>
-    </a>
-    <a href="<?= $appUrl ?>/consulta/buscar" class="<?= str_contains($path, '/ficha') ? 'active' : '' ?>">
-        <i class="bi bi-person-lines-fill"></i>
-        <span>Clientes</span>
-    </a>
-    <a href="<?= $appUrl ?>/logout">
-        <i class="bi bi-box-arrow-right"></i>
-        <span>Salir</span>
-    </a>
+    <?php
+    $path    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $rolNav  = $user['rol'] ?? 'cobrador';
+    ?>
+    <?php if ($rolNav === 'cliente'): ?>
+        <a href="<?= $appUrl ?>/mi-cuenta" class="<?= str_contains($path, '/mi-cuenta') ? 'active' : '' ?>">
+            <i class="bi bi-person-circle"></i>
+            <span>Mi Cuenta</span>
+        </a>
+        <a href="<?= $appUrl ?>/logout">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Salir</span>
+        </a>
+    <?php else: ?>
+        <a href="<?= $appUrl ?>/consulta" class="<?= str_ends_with($path, '/consulta') ? 'active' : '' ?>">
+            <i class="bi bi-house-door"></i>
+            <span>Inicio</span>
+        </a>
+        <a href="<?= $appUrl ?>/consulta/buscar" class="<?= str_contains($path, '/buscar') ? 'active' : '' ?>">
+            <i class="bi bi-search"></i>
+            <span>Buscar</span>
+        </a>
+        <a href="<?= $appUrl ?>/consulta/buscar" class="<?= str_contains($path, '/ficha') ? 'active' : '' ?>">
+            <i class="bi bi-person-lines-fill"></i>
+            <span>Clientes</span>
+        </a>
+        <a href="<?= $appUrl ?>/logout">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Salir</span>
+        </a>
+    <?php endif; ?>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

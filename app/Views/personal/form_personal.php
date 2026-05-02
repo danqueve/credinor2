@@ -98,9 +98,8 @@ ob_start();
                         <div class="col-md-4">
                             <label for="rol_operativo" class="form-label text-light">Rol Operativo <span class="text-danger">*</span></label>
                             <select class="form-select bg-slate-900 border-secondary text-light" id="rol_operativo" name="rol_operativo" required>
-                                <option value="vendedor" <?= (($empleado->rol_operativo ?? '') === 'vendedor') ? 'selected' : '' ?>>Vendedor</option>
-                                <option value="cobrador" <?= (($empleado->rol_operativo ?? '') === 'cobrador') ? 'selected' : '' ?>>Cobrador</option>
-                                <option value="ambos"    <?= (($empleado->rol_operativo ?? '') === 'ambos')    ? 'selected' : '' ?>>Ambos</option>
+                                <option value="cobrador" <?= (($empleado->rol_operativo ?? 'cobrador') === 'cobrador') ? 'selected' : '' ?>>Cobrador</option>
+                                <option value="admin"    <?= (($empleado->rol_operativo ?? '') === 'admin')    ? 'selected' : '' ?>>Admin</option>
                             </select>
                         </div>
                         <div class="col-md-4">

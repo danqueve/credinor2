@@ -35,7 +35,7 @@ class ConsultaController
 
     public function dashboard(): void
     {
-        Auth::requireLogin();
+        Auth::requireCobrador();
 
         $usuarioId    = (int)($_SESSION['usuario_id'] ?? 0);
         $personalId   = $_SESSION['usuario_personal_id'] ?? null;
@@ -64,7 +64,7 @@ class ConsultaController
 
     public function buscar(): void
     {
-        Auth::requireLogin();
+        Auth::requireCobrador();
 
         $q        = Sanitizer::clean($_GET['q'] ?? '');
         $clientes = [];
@@ -84,7 +84,7 @@ class ConsultaController
 
     public function fichaCliente(): void
     {
-        Auth::requireLogin();
+        Auth::requireCobrador();
 
         $id      = (int)($_GET['id'] ?? 0);
         $cliente = $this->clienteRepo->findById($id);
@@ -107,7 +107,7 @@ class ConsultaController
 
     public function fichaCredito(): void
     {
-        Auth::requireLogin();
+        Auth::requireCobrador();
 
         $id      = (int)($_GET['id'] ?? 0);
         $credito = $this->creditoRepo->findById($id);

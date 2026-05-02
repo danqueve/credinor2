@@ -10,7 +10,7 @@ class Personal
     public string $nombre      = '';
     public string $dni         = '';
     public ?string $telefono   = null;
-    public string $rol_operativo = 'vendedor';
+    public string $rol_operativo = 'cobrador';
     public ?int $id_zona       = null;
     public float $comision_pct = 0.0;
     public string $estado      = 'activo';

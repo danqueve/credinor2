@@ -52,6 +52,14 @@ return [
         '/reportes/exportar/cobranza' => [\App\Controllers\ReporteController::class, 'exportCobranza'],
         '/reportes/exportar/atraso'   => [\App\Controllers\ReporteController::class, 'exportAtraso'],
 
+        // Vista cliente — estado de cuenta
+        '/mi-cuenta'         => [\App\Controllers\CuentaClienteController::class, 'index'],
+
+        // Gestión de usuarios (admin)
+        '/usuarios'          => [\App\Controllers\UsuarioController::class, 'index'],
+        '/usuarios/nuevo'    => [\App\Controllers\UsuarioController::class, 'create'],
+        '/usuarios/editar'   => [\App\Controllers\UsuarioController::class, 'edit'],
+
         // Vista Consulta (cobradores — mobile-first, solo lectura)
         '/consulta'          => [\App\Controllers\ConsultaController::class, 'dashboard'],
         '/consulta/buscar'   => [\App\Controllers\ConsultaController::class, 'buscar'],
@@ -97,6 +105,11 @@ return [
         // Comisiones
         '/comisiones/liquidar' => [\App\Controllers\ComisionController::class, 'liquidar'],
         '/comisiones/pagar'    => [\App\Controllers\ComisionController::class, 'marcarPagada'],
+
+        // Usuarios (admin)
+        '/usuarios/store'    => [\App\Controllers\UsuarioController::class, 'store'],
+        '/usuarios/update'   => [\App\Controllers\UsuarioController::class, 'update'],
+        '/usuarios/delete'   => [\App\Controllers\UsuarioController::class, 'delete'],
     ],
 
 ];

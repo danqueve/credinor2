@@ -11,6 +11,7 @@ use App\Helpers\Auth;
 use App\Models\Cliente;
 use App\Repositories\ClienteRepository;
 use App\Repositories\CreditoRepository;
+use App\Repositories\UsuarioRepository;
 use App\Repositories\ZonaRepository;
 
 class ClienteController
@@ -18,12 +19,14 @@ class ClienteController
     private ClienteRepository  $clienteRepo;
     private ZonaRepository    $zonaRepo;
     private CreditoRepository $creditoRepo;
+    private UsuarioRepository  $usuarioRepo;
 
     public function __construct()
     {
         $this->clienteRepo  = new ClienteRepository();
         $this->zonaRepo     = new ZonaRepository();
         $this->creditoRepo  = new CreditoRepository();
+        $this->usuarioRepo  = new UsuarioRepository();
     }
 
     public function index(): void
@@ -97,6 +100,13 @@ class ClienteController
 
         try {
             $id = $this->clienteRepo->insert($cliente);
+            // Crear usuario automático (DNI/DNI) si no existe
+            if (!$this->usuarioRepo->findByCliente($id)) {
+                $dni = trim($cliente->dni);
+                if (!empty($dni) && !$this->usuarioRepo->findByUsername($dni)) {
+                    $this->usuarioRepo->insert($dni, password_hash($dni, PASSWORD_BCRYPT), 'cliente', null, $id, true);
+                }
+            }
         } catch (\PDOException $e) {
             if ($e->getCode() === '23000') {
                 $_SESSION['flash_error'] = "Ya existe un cliente registrado con el DNI {$cliente->dni}.";

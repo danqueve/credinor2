@@ -141,7 +141,7 @@ class PersonalController
         $empleado->nombre = Sanitizer::clean($_POST['nombre'] ?? '');
         $empleado->dni = Sanitizer::clean($_POST['dni'] ?? '');
         $empleado->telefono = Sanitizer::clean($_POST['telefono'] ?? '');
-        $empleado->rol_operativo = Sanitizer::clean($_POST['rol_operativo'] ?? 'vendedor');
+        $empleado->rol_operativo = Sanitizer::clean($_POST['rol_operativo'] ?? 'cobrador');
         $empleado->id_zona = !empty($_POST['id_zona']) ? (int)$_POST['id_zona'] : null;
         $empleado->comision_pct = (float)($_POST['comision_pct'] ?? 0);
         $empleado->estado = Sanitizer::clean($_POST['estado'] ?? 'activo');
@@ -189,7 +189,7 @@ class PersonalController
         $empleado->nombre = Sanitizer::clean($_POST['nombre'] ?? '');
         $empleado->dni = Sanitizer::clean($_POST['dni'] ?? '');
         $empleado->telefono = Sanitizer::clean($_POST['telefono'] ?? '');
-        $empleado->rol_operativo = Sanitizer::clean($_POST['rol_operativo'] ?? 'vendedor');
+        $empleado->rol_operativo = Sanitizer::clean($_POST['rol_operativo'] ?? 'cobrador');
         $empleado->id_zona = !empty($_POST['id_zona']) ? (int)$_POST['id_zona'] : null;
         $empleado->comision_pct = (float)($_POST['comision_pct'] ?? 0);
         $empleado->estado = Sanitizer::clean($_POST['estado'] ?? 'activo');

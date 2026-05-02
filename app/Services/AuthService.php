@@ -64,10 +64,11 @@ class AuthService
         $this->repo->updateLastLogin($user->id_usuario);
 
         Session::regenerate(true);
-        Session::set('usuario_id', $user->id_usuario);
-        Session::set('usuario_nombre', $user->username);
-        Session::set('usuario_rol', $user->rol);
+        Session::set('usuario_id',          $user->id_usuario);
+        Session::set('usuario_nombre',      $user->username);
+        Session::set('usuario_rol',         $user->rol);
         Session::set('usuario_personal_id', $user->id_personal);
+        Session::set('usuario_cliente_id',  $user->id_cliente);
 
         Audit::log('login.success', 'usuarios', $user->id_usuario);
 
@@ -104,10 +105,11 @@ class AuthService
         $personal = Session::get('totp_pending_personal');
 
         Session::regenerate(true);
-        Session::set('usuario_id',         $user->id_usuario);
-        Session::set('usuario_nombre',     $nombre);
-        Session::set('usuario_rol',        $rol);
+        Session::set('usuario_id',          $user->id_usuario);
+        Session::set('usuario_nombre',      $nombre);
+        Session::set('usuario_rol',         $rol);
         Session::set('usuario_personal_id', $personal);
+        Session::set('usuario_cliente_id',  $user->id_cliente);
 
         Audit::log('login.success', 'usuarios', $user->id_usuario);
         return ['ok' => true, 'message' => 'Bienvenido.'];

@@ -111,6 +111,14 @@
                         Personal & Zonas
                     </a>
                 </li>
+                <li class="mb-1">
+                    <a href="<?= $appUrl ?>/usuarios" class="sidebar-nav-link">
+                        <span class="sidebar-icon-wrap icon-wrap-blue">
+                            <i class="bi bi-shield-lock-fill"></i>
+                        </span>
+                        Usuarios
+                    </a>
+                </li>
             <?php endif; ?>
         </ul>
     </div>
