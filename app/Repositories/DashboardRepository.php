@@ -46,22 +46,32 @@ class DashboardRepository
      */
     public function getProximosVencimientos(int $limit = 5): array
     {
+        // Una sola fila por cliente: la cuota más próxima de su crédito activo
         $sql = "
-            SELECT 
-                cu.fecha_vencimiento, 
-                cu.monto_esperado, 
+            SELECT
+                cu.fecha_vencimiento,
+                cu.monto_esperado,
                 cu.monto_pagado,
-                cr.codigo AS credito_codigo,
-                cl.nombre AS cliente_nombre,
-                cl.apellido AS cliente_apellido
+                cr.codigo  AS credito_codigo,
+                cl.nombre  AS cliente_nombre,
+                cl.id_cliente
             FROM cuotas cu
             JOIN creditos cr ON cu.id_credito = cr.id_credito
             JOIN clientes cl ON cr.id_cliente = cl.id_cliente
-            WHERE cu.fecha_vencimiento >= CURRENT_DATE 
-              AND cu.estado IN ('pendiente', 'parcial')
+            WHERE cu.id_cuota = (
+                SELECT cu2.id_cuota
+                FROM cuotas cu2
+                JOIN creditos cr2 ON cu2.id_credito = cr2.id_credito
+                WHERE cr2.id_cliente = cl.id_cliente
+                  AND cr2.estado = 'activo'
+                  AND cr2.deleted_at IS NULL
+                  AND cu2.estado IN ('pendiente','parcial','vencida')
+                ORDER BY cu2.fecha_vencimiento ASC, cu2.id_cuota ASC
+                LIMIT 1
+            )
               AND cr.estado = 'activo'
               AND cr.deleted_at IS NULL
-            ORDER BY cu.fecha_vencimiento ASC, cu.id_cuota ASC
+            ORDER BY cu.fecha_vencimiento ASC
             LIMIT ?
         ";
         $stmt = $this->db->prepare($sql);
