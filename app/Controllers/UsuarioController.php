@@ -8,21 +8,18 @@ use App\Helpers\Auth;
 use App\Helpers\Audit;
 use App\Helpers\Sanitizer;
 use App\Helpers\View;
-use App\Repositories\ClienteRepository;
 use App\Repositories\PersonalRepository;
 use App\Repositories\UsuarioRepository;
 
 class UsuarioController
 {
-    private UsuarioRepository $repo;
+    private UsuarioRepository  $repo;
     private PersonalRepository $personalRepo;
-    private ClienteRepository  $clienteRepo;
 
     public function __construct()
     {
         $this->repo         = new UsuarioRepository();
         $this->personalRepo = new PersonalRepository();
-        $this->clienteRepo  = new ClienteRepository();
     }
 
     public function index(): void
@@ -43,7 +40,6 @@ class UsuarioController
             'titulo'   => 'Nuevo Usuario',
             'usuario'  => null,
             'personal' => $this->personalRepo->findAllActive(),
-            'clientes' => $this->clienteRepo->findAll(500, 0),
             'action'   => 'store',
         ]);
     }
@@ -56,8 +52,12 @@ class UsuarioController
         $password   = $_POST['password'] ?? '';
         $rol        = Sanitizer::clean($_POST['rol'] ?? 'cobrador');
         $idPersonal = !empty($_POST['id_personal']) ? (int)$_POST['id_personal'] : null;
-        $idCliente  = !empty($_POST['id_cliente'])  ? (int)$_POST['id_cliente']  : null;
         $activo     = isset($_POST['activo']);
+
+        // Solo se permiten roles de sistema desde este formulario
+        if (!in_array($rol, ['admin', 'cobrador'], true)) {
+            $rol = 'cobrador';
+        }
 
         if (empty($username) || empty($password)) {
             $_SESSION['flash_error'] = 'El usuario y la contraseña son obligatorios.';
@@ -68,7 +68,7 @@ class UsuarioController
         $hash = password_hash($password, PASSWORD_BCRYPT);
 
         try {
-            $id = $this->repo->insert($username, $hash, $rol, $idPersonal, $idCliente, $activo);
+            $id = $this->repo->insert($username, $hash, $rol, $idPersonal, null, $activo);
         } catch (\PDOException $e) {
             $_SESSION['flash_error'] = $e->getCode() === '23000'
                 ? "El usuario '{$username}' ya existe."
@@ -99,7 +99,6 @@ class UsuarioController
             'titulo'   => 'Editar Usuario',
             'usuario'  => $usuario,
             'personal' => $this->personalRepo->findAllActive(),
-            'clientes' => $this->clienteRepo->findAll(500, 0),
             'action'   => 'update?id=' . $id,
         ]);
     }
@@ -113,8 +112,11 @@ class UsuarioController
         $password   = $_POST['password'] ?? '';
         $rol        = Sanitizer::clean($_POST['rol'] ?? 'cobrador');
         $idPersonal = !empty($_POST['id_personal']) ? (int)$_POST['id_personal'] : null;
-        $idCliente  = !empty($_POST['id_cliente'])  ? (int)$_POST['id_cliente']  : null;
         $activo     = isset($_POST['activo']);
+
+        if (!in_array($rol, ['admin', 'cobrador'], true)) {
+            $rol = 'cobrador';
+        }
 
         if (empty($username)) {
             $_SESSION['flash_error'] = 'El nombre de usuario es obligatorio.';
@@ -125,7 +127,7 @@ class UsuarioController
         $hash = !empty($password) ? password_hash($password, PASSWORD_BCRYPT) : null;
 
         try {
-            $this->repo->update($id, $username, $hash, $rol, $idPersonal, $idCliente, $activo);
+            $this->repo->update($id, $username, $hash, $rol, $idPersonal, null, $activo);
         } catch (\PDOException $e) {
             $_SESSION['flash_error'] = $e->getCode() === '23000'
                 ? "El usuario '{$username}' ya existe."
@@ -135,7 +137,7 @@ class UsuarioController
         }
 
         Audit::log('editar_usuario', 'usuarios', $id);
-        $_SESSION['flash_success'] = "Usuario actualizado con éxito.";
+        $_SESSION['flash_success'] = 'Usuario actualizado con éxito.';
         header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios');
         exit;
     }
@@ -154,7 +156,7 @@ class UsuarioController
 
         $this->repo->softDelete($id);
         Audit::log('eliminar_usuario', 'usuarios', $id);
-        $_SESSION['flash_success'] = "Usuario eliminado.";
+        $_SESSION['flash_success'] = 'Usuario eliminado.';
         header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios');
         exit;
     }

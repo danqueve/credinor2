@@ -26,7 +26,7 @@ $esEdicion = ($usuario !== null);
             </div>
             <div class="card-body p-4">
                 <form action="<?= $appUrl ?>/usuarios/<?= $action ?>" method="POST"
-                      x-data="usuarioForm()" @submit.prevent="submit">
+                      x-data="{ rol: '<?= htmlspecialchars($usuario->rol ?? 'cobrador') ?>' }">
 
                     <?= \App\Helpers\Csrf::getFormField() ?>
 
@@ -45,7 +45,7 @@ $esEdicion = ($usuario !== null);
                                 <input type="text" name="username"
                                        class="form-control bg-slate-900 border-secondary text-light"
                                        value="<?= htmlspecialchars($usuario->username ?? '') ?>"
-                                       placeholder="DNI o nombre de usuario" required autofocus>
+                                       placeholder="Nombre de usuario" required autofocus>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -79,11 +79,10 @@ $esEdicion = ($usuario !== null);
                                     x-model="rol" required>
                                 <option value="admin"    <?= ($usuario->rol ?? '') === 'admin'    ? 'selected' : '' ?>>Admin</option>
                                 <option value="cobrador" <?= ($usuario->rol ?? 'cobrador') === 'cobrador' ? 'selected' : '' ?>>Cobrador</option>
-                                <option value="cliente"  <?= ($usuario->rol ?? '') === 'cliente'  ? 'selected' : '' ?>>Cliente</option>
                             </select>
                         </div>
 
-                        <!-- Personal (solo cobrador) -->
+                        <!-- Personal vinculado (cobrador) -->
                         <div class="col-md-8" x-show="rol === 'cobrador'" x-cloak>
                             <label class="form-label text-light">Personal vinculado</label>
                             <select name="id_personal" class="form-select bg-slate-900 border-secondary text-light">
@@ -95,21 +94,6 @@ $esEdicion = ($usuario !== null);
                                     </option>
                                 <?php endforeach; ?>
                             </select>
-                        </div>
-
-                        <!-- Cliente (solo rol cliente) -->
-                        <div class="col-md-8" x-show="rol === 'cliente'" x-cloak>
-                            <label class="form-label text-light">Cliente vinculado <span class="text-danger">*</span></label>
-                            <select name="id_cliente" class="form-select bg-slate-900 border-secondary text-light">
-                                <option value="">— Seleccionar cliente —</option>
-                                <?php foreach ($clientes as $c): ?>
-                                    <option value="<?= $c->id_cliente ?>"
-                                        <?= ($usuario->id_cliente ?? null) === $c->id_cliente ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($c->nombre) ?> — DNI <?= htmlspecialchars($c->dni) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                            <div class="form-text text-secondary">El usuario solo podrá ver el estado de cuenta de este cliente.</div>
                         </div>
                     </div>
 
@@ -132,15 +116,6 @@ $esEdicion = ($usuario !== null);
         </div>
     </div>
 </div>
-
-<script>
-function usuarioForm() {
-    return {
-        rol: '<?= htmlspecialchars($usuario->rol ?? 'cobrador') ?>',
-        submit(e) { e.$el.submit(); }
-    };
-}
-</script>
 
 <?php
 $content = ob_get_clean();

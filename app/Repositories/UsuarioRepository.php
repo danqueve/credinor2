@@ -17,19 +17,17 @@ class UsuarioRepository
         $this->db = Database::getInstance();
     }
 
-    /** @return array<int, array<string,mixed>> */
+    /** Solo usuarios del sistema (admin/cobrador) — los clientes se gestionan automáticamente */
     public function findAll(): array
     {
         $stmt = $this->db->query("
             SELECT u.*,
-                   p.nombre AS personal_nombre,
-                   c.nombre AS cliente_nombre,
-                   c.dni    AS cliente_dni
+                   p.nombre AS personal_nombre
             FROM usuarios u
             LEFT JOIN personal p ON u.id_personal = p.id_personal
-            LEFT JOIN clientes c ON u.id_cliente  = c.id_cliente
             WHERE u.deleted_at IS NULL
-            ORDER BY FIELD(u.rol,'admin','cobrador','cliente'), u.username ASC
+              AND u.rol IN ('admin','cobrador')
+            ORDER BY FIELD(u.rol,'admin','cobrador'), u.username ASC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

@@ -38,7 +38,7 @@ ob_start();
                     <tr>
                         <th>Usuario</th>
                         <th>Rol</th>
-                        <th>Vinculado a</th>
+                        <th>Personal vinculado</th>
                         <th class="text-center">Estado</th>
                         <th class="text-secondary small">Último acceso</th>
                         <th class="text-end">Acciones</th>
@@ -56,14 +56,9 @@ ob_start();
                         $rolBadge = match ($u['rol']) {
                             'admin'    => ['badge-activo', 'Admin'],
                             'cobrador' => ['badge-refinanciado', 'Cobrador'],
-                            'cliente'  => ['bg-info bg-opacity-20 text-info border border-info border-opacity-25', 'Cliente'],
                             default    => ['bg-secondary', $u['rol']],
                         };
-                        $vinculo = match ($u['rol']) {
-                            'cobrador' => $u['personal_nombre'] ?? '—',
-                            'cliente'  => ($u['cliente_nombre'] ?? '—') . ($u['cliente_dni'] ? ' · DNI ' . $u['cliente_dni'] : ''),
-                            default    => '—',
-                        };
+                        $vinculo = $u['personal_nombre'] ?? '—';
                     ?>
                     <tr>
                         <td>
