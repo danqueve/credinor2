@@ -8,18 +8,15 @@ use App\Helpers\Auth;
 use App\Helpers\Audit;
 use App\Helpers\Sanitizer;
 use App\Helpers\View;
-use App\Repositories\PersonalRepository;
 use App\Repositories\UsuarioRepository;
 
 class UsuarioController
 {
-    private UsuarioRepository  $repo;
-    private PersonalRepository $personalRepo;
+    private UsuarioRepository $repo;
 
     public function __construct()
     {
-        $this->repo         = new UsuarioRepository();
-        $this->personalRepo = new PersonalRepository();
+        $this->repo = new UsuarioRepository();
     }
 
     public function index(): void
@@ -37,10 +34,9 @@ class UsuarioController
         Auth::requireAdmin();
 
         View::render('usuarios/form', [
-            'titulo'   => 'Nuevo Usuario',
-            'usuario'  => null,
-            'personal' => $this->personalRepo->findAllActive(),
-            'action'   => 'store',
+            'titulo'  => 'Nuevo Usuario',
+            'usuario' => null,
+            'action'  => 'store',
         ]);
     }
 
@@ -48,19 +44,20 @@ class UsuarioController
     {
         Auth::requireAdmin();
 
-        $username   = Sanitizer::clean($_POST['username'] ?? '');
-        $password   = $_POST['password'] ?? '';
-        $rol        = Sanitizer::clean($_POST['rol'] ?? 'cobrador');
-        $idPersonal = !empty($_POST['id_personal']) ? (int)$_POST['id_personal'] : null;
-        $activo     = isset($_POST['activo']);
+        $apellido = Sanitizer::clean($_POST['apellido'] ?? '');
+        $nombre   = Sanitizer::clean($_POST['nombre']   ?? '');
+        $dni      = Sanitizer::clean($_POST['dni']      ?? '');
+        $username = !empty($dni) ? $dni : Sanitizer::clean($_POST['username'] ?? '');
+        $password = !empty($_POST['password']) ? $_POST['password'] : $dni;
+        $rol      = Sanitizer::clean($_POST['rol'] ?? 'cobrador');
+        $activo   = isset($_POST['activo']);
 
-        // Solo se permiten roles de sistema desde este formulario
         if (!in_array($rol, ['admin', 'cobrador'], true)) {
             $rol = 'cobrador';
         }
 
-        if (empty($username) || empty($password)) {
-            $_SESSION['flash_error'] = 'El usuario y la contraseña son obligatorios.';
+        if (empty($apellido) || empty($nombre) || empty($dni)) {
+            $_SESSION['flash_error'] = 'Apellido, nombre y DNI son obligatorios.';
             header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios/nuevo');
             exit;
         }
@@ -68,17 +65,17 @@ class UsuarioController
         $hash = password_hash($password, PASSWORD_BCRYPT);
 
         try {
-            $id = $this->repo->insert($username, $hash, $rol, $idPersonal, null, $activo);
+            $id = $this->repo->insert($username, $hash, $rol, null, null, $activo, $apellido, $nombre, $dni);
         } catch (\PDOException $e) {
             $_SESSION['flash_error'] = $e->getCode() === '23000'
-                ? "El usuario '{$username}' ya existe."
+                ? "Ya existe un usuario con el DNI/usuario '{$username}'."
                 : 'Error al guardar. Intente nuevamente.';
             header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios/nuevo');
             exit;
         }
 
         Audit::log('crear_usuario', 'usuarios', $id);
-        $_SESSION['flash_success'] = "Usuario '{$username}' creado con éxito.";
+        $_SESSION['flash_success'] = "Usuario {$apellido}, {$nombre} creado con éxito.";
         header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios');
         exit;
     }
@@ -96,10 +93,9 @@ class UsuarioController
         }
 
         View::render('usuarios/form', [
-            'titulo'   => 'Editar Usuario',
-            'usuario'  => $usuario,
-            'personal' => $this->personalRepo->findAllActive(),
-            'action'   => 'update?id=' . $id,
+            'titulo'  => 'Editar Usuario',
+            'usuario' => $usuario,
+            'action'  => 'update?id=' . $id,
         ]);
     }
 
@@ -108,18 +104,20 @@ class UsuarioController
         Auth::requireAdmin();
         $id = (int)($_GET['id'] ?? 0);
 
-        $username   = Sanitizer::clean($_POST['username'] ?? '');
-        $password   = $_POST['password'] ?? '';
-        $rol        = Sanitizer::clean($_POST['rol'] ?? 'cobrador');
-        $idPersonal = !empty($_POST['id_personal']) ? (int)$_POST['id_personal'] : null;
-        $activo     = isset($_POST['activo']);
+        $apellido = Sanitizer::clean($_POST['apellido'] ?? '');
+        $nombre   = Sanitizer::clean($_POST['nombre']   ?? '');
+        $dni      = Sanitizer::clean($_POST['dni']      ?? '');
+        $username = !empty($dni) ? $dni : Sanitizer::clean($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $rol      = Sanitizer::clean($_POST['rol'] ?? 'cobrador');
+        $activo   = isset($_POST['activo']);
 
         if (!in_array($rol, ['admin', 'cobrador'], true)) {
             $rol = 'cobrador';
         }
 
-        if (empty($username)) {
-            $_SESSION['flash_error'] = 'El nombre de usuario es obligatorio.';
+        if (empty($apellido) || empty($nombre) || empty($dni)) {
+            $_SESSION['flash_error'] = 'Apellido, nombre y DNI son obligatorios.';
             header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios/editar?id=' . $id);
             exit;
         }
@@ -127,10 +125,10 @@ class UsuarioController
         $hash = !empty($password) ? password_hash($password, PASSWORD_BCRYPT) : null;
 
         try {
-            $this->repo->update($id, $username, $hash, $rol, $idPersonal, null, $activo);
+            $this->repo->update($id, $username, $hash, $rol, null, null, $activo, $apellido, $nombre, $dni);
         } catch (\PDOException $e) {
             $_SESSION['flash_error'] = $e->getCode() === '23000'
-                ? "El usuario '{$username}' ya existe."
+                ? "Ya existe otro usuario con ese DNI."
                 : 'Error al actualizar. Intente nuevamente.';
             header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios/editar?id=' . $id);
             exit;

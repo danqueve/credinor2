@@ -36,9 +36,9 @@ ob_start();
             <table class="table table-dark table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Usuario</th>
+                        <th>Apellido y Nombre</th>
+                        <th>DNI / Usuario</th>
                         <th>Rol</th>
-                        <th>Personal vinculado</th>
                         <th class="text-center">Estado</th>
                         <th class="text-secondary small">Último acceso</th>
                         <th class="text-end">Acciones</th>
@@ -48,27 +48,30 @@ ob_start();
                 <?php if (empty($usuarios)): ?>
                     <tr>
                         <td colspan="6" class="text-center py-5 text-secondary">
-                            <i class="bi bi-person-x d-block fs-2 mb-2"></i>No hay usuarios.
+                            <i class="bi bi-person-x d-block fs-2 mb-2"></i>No hay usuarios registrados.
                         </td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($usuarios as $u):
                         $rolBadge = match ($u['rol']) {
-                            'admin'    => ['badge-activo', 'Admin'],
+                            'admin'    => ['badge-activo',       'Admin'],
                             'cobrador' => ['badge-refinanciado', 'Cobrador'],
-                            default    => ['bg-secondary', $u['rol']],
+                            default    => ['bg-secondary',       $u['rol']],
                         };
-                        $vinculo = $u['personal_nombre'] ?? '—';
+                        $nombreCompleto = trim(($u['apellido'] ?? '') . ', ' . ($u['nombre'] ?? ''));
+                        if ($nombreCompleto === ', ') $nombreCompleto = $u['username'];
                     ?>
                     <tr>
                         <td>
-                            <div class="fw-semibold text-light"><?= htmlspecialchars($u['username']) ?></div>
-                            <div class="small text-secondary">#<?= $u['id_usuario'] ?></div>
+                            <div class="fw-semibold text-light"><?= htmlspecialchars($nombreCompleto) ?></div>
+                        </td>
+                        <td>
+                            <div class="font-monospace text-info small"><?= htmlspecialchars($u['dni'] ?? $u['username']) ?></div>
+                            <div class="text-secondary" style="font-size:0.75rem;">usuario: <?= htmlspecialchars($u['username']) ?></div>
                         </td>
                         <td>
                             <span class="badge <?= $rolBadge[0] ?>"><?= $rolBadge[1] ?></span>
                         </td>
-                        <td class="small text-secondary"><?= htmlspecialchars($vinculo) ?></td>
                         <td class="text-center">
                             <?php if ($u['activo']): ?>
                                 <span class="badge badge-activo">Activo</span>
@@ -87,7 +90,7 @@ ob_start();
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <form method="POST" action="<?= $appUrl ?>/usuarios/delete"
-                                      onsubmit="return confirm('¿Eliminar el usuario \'<?= htmlspecialchars(addslashes($u['username'])) ?>\'?')">
+                                      onsubmit="return confirm('¿Eliminar el usuario <?= htmlspecialchars(addslashes($nombreCompleto)) ?>?')">
                                     <?= \App\Helpers\Csrf::getFormField() ?>
                                     <input type="hidden" name="id" value="<?= $u['id_usuario'] ?>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger"

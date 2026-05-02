@@ -21,13 +21,11 @@ class UsuarioRepository
     public function findAll(): array
     {
         $stmt = $this->db->query("
-            SELECT u.*,
-                   p.nombre AS personal_nombre
+            SELECT u.*
             FROM usuarios u
-            LEFT JOIN personal p ON u.id_personal = p.id_personal
             WHERE u.deleted_at IS NULL
               AND u.rol IN ('admin','cobrador')
-            ORDER BY FIELD(u.rol,'admin','cobrador'), u.username ASC
+            ORDER BY FIELD(u.rol,'admin','cobrador'), u.apellido ASC, u.nombre ASC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -60,32 +58,32 @@ class UsuarioRepository
         return $row ? $this->hydrate($row) : null;
     }
 
-    public function insert(string $username, string $passwordHash, string $rol, ?int $idPersonal, ?int $idCliente, bool $activo): int
+    public function insert(string $username, string $passwordHash, string $rol, ?int $idPersonal, ?int $idCliente, bool $activo, ?string $apellido = null, ?string $nombre = null, ?string $dni = null): int
     {
         $stmt = $this->db->prepare("
-            INSERT INTO usuarios (username, password_hash, rol, id_personal, id_cliente, activo)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO usuarios (username, apellido, nombre, dni, password_hash, rol, id_personal, id_cliente, activo)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        $stmt->execute([$username, $passwordHash, $rol, $idPersonal, $idCliente, $activo ? 1 : 0]);
+        $stmt->execute([$username, $apellido, $nombre, $dni, $passwordHash, $rol, $idPersonal, $idCliente, $activo ? 1 : 0]);
         return (int)$this->db->lastInsertId();
     }
 
-    public function update(int $id, string $username, ?string $passwordHash, string $rol, ?int $idPersonal, ?int $idCliente, bool $activo): void
+    public function update(int $id, string $username, ?string $passwordHash, string $rol, ?int $idPersonal, ?int $idCliente, bool $activo, ?string $apellido = null, ?string $nombre = null, ?string $dni = null): void
     {
         if ($passwordHash !== null) {
             $stmt = $this->db->prepare("
                 UPDATE usuarios
-                SET username=?, password_hash=?, rol=?, id_personal=?, id_cliente=?, activo=?
+                SET username=?, apellido=?, nombre=?, dni=?, password_hash=?, rol=?, id_personal=?, id_cliente=?, activo=?
                 WHERE id_usuario=?
             ");
-            $stmt->execute([$username, $passwordHash, $rol, $idPersonal, $idCliente, $activo ? 1 : 0, $id]);
+            $stmt->execute([$username, $apellido, $nombre, $dni, $passwordHash, $rol, $idPersonal, $idCliente, $activo ? 1 : 0, $id]);
         } else {
             $stmt = $this->db->prepare("
                 UPDATE usuarios
-                SET username=?, rol=?, id_personal=?, id_cliente=?, activo=?
+                SET username=?, apellido=?, nombre=?, dni=?, rol=?, id_personal=?, id_cliente=?, activo=?
                 WHERE id_usuario=?
             ");
-            $stmt->execute([$username, $rol, $idPersonal, $idCliente, $activo ? 1 : 0, $id]);
+            $stmt->execute([$username, $apellido, $nombre, $dni, $rol, $idPersonal, $idCliente, $activo ? 1 : 0, $id]);
         }
     }
 
@@ -129,10 +127,13 @@ class UsuarioRepository
         $user = new Usuario();
         $user->id_usuario        = (int)$row['id_usuario'];
         $user->username          = $row['username'];
+        $user->apellido          = $row['apellido']       ?? null;
+        $user->nombre            = $row['nombre']         ?? null;
+        $user->dni               = $row['dni']            ?? null;
         $user->password_hash     = $row['password_hash'];
         $user->rol               = $row['rol'];
-        $user->id_personal       = isset($row['id_personal'])  ? (int)$row['id_personal']  : null;
-        $user->id_cliente        = isset($row['id_cliente'])   ? (int)$row['id_cliente']   : null;
+        $user->id_personal       = isset($row['id_personal']) ? (int)$row['id_personal'] : null;
+        $user->id_cliente        = isset($row['id_cliente'])  ? (int)$row['id_cliente']  : null;
         $user->activo            = (bool)$row['activo'];
         $user->ultimo_login      = $row['ultimo_login']      ?? null;
         $user->intentos_fallidos = (int)($row['intentos_fallidos'] ?? 0);

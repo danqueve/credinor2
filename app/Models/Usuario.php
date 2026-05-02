@@ -8,6 +8,9 @@ class Usuario
 {
     public int $id_usuario;
     public string $username;
+    public ?string $apellido = null;
+    public ?string $nombre   = null;
+    public ?string $dni      = null;
     public string $password_hash;
     public string $rol;
     public ?int $id_personal;
