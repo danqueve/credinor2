@@ -32,7 +32,7 @@ class RendicionController
 
     public function index(): void
     {
-        Auth::requireLogin();
+        Auth::requireAdminReadOnly();
 
         $page       = max(1, (int)($_GET['page'] ?? 1));
         $limit      = 20;
@@ -54,7 +54,7 @@ class RendicionController
 
     public function ficha(): void
     {
-        Auth::requireLogin();
+        Auth::requireAdminReadOnly();
 
         $id        = (int)($_GET['id'] ?? 0);
         $rendicion = $this->rendicionRepo->findById($id);

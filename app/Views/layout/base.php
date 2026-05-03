@@ -67,10 +67,75 @@ $user = \App\Helpers\Auth::user();
     <script src="<?= $appUrl ?>/assets/js/app.js"></script>
 
     <script>
-        // Toggle Sidebar
+        // Mobile: toggle sidebar overlay
         document.getElementById('sidebarCollapse')?.addEventListener('click', function () {
             document.getElementById('sidebar').classList.toggle('active');
         });
+
+        // Desktop: rail (icon-only) toggle
+        (function () {
+            const sidebar = document.getElementById('sidebar');
+            const toggle  = document.getElementById('sidebarRailToggle');
+            if (!sidebar || !toggle) return;
+
+            let tooltips = [];
+
+            function enableTooltips() {
+                sidebar.querySelectorAll('.rail-item').forEach(function (el) {
+                    const title = el.dataset.railTitle;
+                    if (!title) return;
+                    el.setAttribute('data-bs-original-title', title);
+                    tooltips.push(new bootstrap.Tooltip(el, {
+                        title: title,
+                        placement: 'right',
+                        trigger: 'hover',
+                        boundary: 'window'
+                    }));
+                });
+            }
+
+            function disableTooltips() {
+                tooltips.forEach(function (tt) { tt.dispose(); });
+                tooltips = [];
+                sidebar.querySelectorAll('.rail-item').forEach(function (el) {
+                    el.removeAttribute('data-bs-original-title');
+                });
+            }
+
+            function setRail(isRail) {
+                if (isRail) {
+                    sidebar.classList.add('sidebar-rail');
+                    // Close open submenus
+                    sidebar.querySelectorAll('.collapse.show').forEach(function (el) {
+                        bootstrap.Collapse.getOrCreateInstance(el).hide();
+                    });
+                    enableTooltips();
+                } else {
+                    sidebar.classList.remove('sidebar-rail');
+                    disableTooltips();
+                }
+            }
+
+            // Restore persisted state
+            setRail(localStorage.getItem('sidebarRail') === '1');
+
+            toggle.addEventListener('click', function () {
+                const next = !sidebar.classList.contains('sidebar-rail');
+                setRail(next);
+                localStorage.setItem('sidebarRail', next ? '1' : '0');
+            });
+
+            // In rail mode, submenu parents navigate directly to data-rail-href
+            sidebar.querySelectorAll('[data-rail-href]').forEach(function (el) {
+                el.addEventListener('click', function (e) {
+                    if (sidebar.classList.contains('sidebar-rail')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.location.href = el.dataset.railHref;
+                    }
+                });
+            });
+        })();
     </script>
 </body>
 </html>

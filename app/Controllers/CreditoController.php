@@ -36,7 +36,7 @@ class CreditoController
 
     public function index(): void
     {
-        Auth::requireLogin();
+        Auth::requireAdminReadOnly();
 
         $page   = max(1, (int)($_GET['page'] ?? 1));
         $search = Sanitizer::clean($_GET['q']      ?? '');
@@ -63,7 +63,7 @@ class CreditoController
 
     public function ficha(): void
     {
-        Auth::requireLogin();
+        Auth::requireAdminReadOnly();
 
         $id      = (int)($_GET['id'] ?? 0);
         $credito = $this->creditoRepo->findById($id);

@@ -31,9 +31,30 @@ $porcentaje = count($cuotasHoy) > 0
     <div class="col-6">
         <div class="card bg-slate-800 border-0 text-center p-3">
             <div class="text-secondary small">Total esperado</div>
-            <div class="fw-bold text-info" style="font-size: 1.1rem;">$<?= number_format($totalEsperado, 0, ',', '.') ?></div>
+            <div class="fw-bold text-secondary" style="font-size: 1rem;">$<?= number_format($totalEsperado, 0, ',', '.') ?></div>
         </div>
     </div>
+</div>
+
+<!-- Cobrado real vs esperado -->
+<div class="card border-0 p-3 mb-4 <?= $totalCobrado >= $totalEsperado && $totalEsperado > 0 ? 'bg-success bg-opacity-15' : 'bg-slate-800' ?>">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <div class="text-secondary small">Cobrado hoy (real)</div>
+            <div class="fw-bold text-success fs-4 mb-0">$<?= number_format($totalCobrado, 0, ',', '.') ?></div>
+        </div>
+        <div class="text-end">
+            <div class="text-secondary small">Esperado</div>
+            <div class="fw-semibold text-secondary">$<?= number_format($totalEsperado, 0, ',', '.') ?></div>
+        </div>
+    </div>
+    <?php if ($totalEsperado > 0): ?>
+    <?php $pctReal = min(100, round(($totalCobrado / $totalEsperado) * 100)); ?>
+    <div class="progress mt-2" style="height: 6px; border-radius: 4px;">
+        <div class="progress-bar bg-success" style="width: <?= $pctReal ?>%; border-radius: 4px;"></div>
+    </div>
+    <div class="text-end" style="font-size:0.7rem; color:#64748b; margin-top:3px;"><?= $pctReal ?>% cobrado</div>
+    <?php endif; ?>
 </div>
 
 <!-- Barra de progreso -->
@@ -57,7 +78,10 @@ $porcentaje = count($cuotasHoy) > 0
 <?php if (empty($cuotasHoy)): ?>
     <div class="text-center py-5 text-secondary">
         <i class="bi bi-check-circle-fill text-success fs-1 d-block mb-2"></i>
-        <div>Sin cuotas pendientes para hoy.</div>
+        <div class="mb-3">Sin cuotas pendientes para hoy.</div>
+        <a href="<?= $appUrl ?>/consulta/buscar" class="btn btn-outline-info btn-sm">
+            <i class="bi bi-people me-1"></i> Ver toda mi cartera
+        </a>
     </div>
 <?php else: ?>
     <div class="d-flex flex-column gap-2">
@@ -69,7 +93,7 @@ $porcentaje = count($cuotasHoy) > 0
                     <i class="bi bi-<?= $pagada ? 'check-circle-fill' : 'circle' ?>"></i>
                 </div>
                 <div class="flex-grow-1 overflow-hidden">
-                    <a href="<?= $appUrl ?>/consulta/cliente?id=<?= $c['id_credito'] ?>"
+                    <a href="<?= $appUrl ?>/consulta/credito?id=<?= $c['id_credito'] ?>"
                        class="text-light text-decoration-none fw-semibold d-block text-truncate">
                         <?= htmlspecialchars($c['cliente_nombre']) ?>
                     </a>
@@ -98,6 +122,64 @@ $porcentaje = count($cuotasHoy) > 0
     <?php endforeach; ?>
     </div>
 <?php endif; ?>
+
+<style>
+.ptr-indicator {
+    position: fixed; top: 50px; left: 50%; transform: translateX(-50%);
+    z-index: 200; display: none; align-items: center; gap: 6px;
+    background: rgba(30,41,59,.92); border-radius: 20px;
+    padding: 6px 14px; font-size: 0.78rem; color: #94a3b8;
+    backdrop-filter: blur(6px);
+}
+.ptr-indicator.visible { display: flex; }
+.ptr-spinner {
+    width: 16px; height: 16px; border: 2px solid #334155;
+    border-top-color: #38bdf8; border-radius: 50%;
+    animation: spin .6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<div class="ptr-indicator" id="ptrIndicator">
+    <div class="ptr-spinner"></div>
+    Actualizando…
+</div>
+
+<script>
+(function () {
+    let startY = 0, pulling = false, triggered = false;
+    const indicator = document.getElementById('ptrIndicator');
+    const THRESHOLD = 90;
+
+    document.addEventListener('touchstart', e => {
+        if (window.scrollY === 0) {
+            startY = e.touches[0].clientY;
+            pulling = true;
+            triggered = false;
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchmove', e => {
+        if (!pulling) return;
+        const delta = e.touches[0].clientY - startY;
+        if (delta > 30) {
+            indicator.classList.add('visible');
+        }
+        if (delta > THRESHOLD && !triggered) {
+            triggered = true;
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+        if (triggered) {
+            location.reload();
+        } else {
+            indicator.classList.remove('visible');
+        }
+        pulling = false;
+    });
+})();
+</script>
 
 <?php
 $content = ob_get_clean();

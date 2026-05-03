@@ -21,6 +21,8 @@ class Cliente
     public ?string $zona_nombre = null;
 
     // Stats calculadas en listado
+    public float $saldo_total     = 0.0;
+    public int $cuotas_vencidas   = 0;
     public int $creditos_activos  = 0;
     public int $total_pagos       = 0;
     // Crédito principal activo

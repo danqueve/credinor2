@@ -24,9 +24,16 @@ $saldoTotal         = array_sum(array_map(fn($c) => $c->saldo_pendiente, $credit
         </div>
     </div>
 
-    <!-- Contacto rápido -->
-    <?php if ($cliente->telefono): ?>
-    <div class="d-flex gap-2 mt-3">
+    <!-- Contacto + reporte -->
+    <?php
+    $adminWa   = $_ENV['ADMIN_WHATSAPP'] ?? '';
+    $resumen   = 'Cliente: ' . $cliente->nombre . ' | DNI: ' . $cliente->dni;
+    if ($cliente->telefono) $resumen .= ' | Tel: ' . $cliente->telefono;
+    if (count($creditosActivos) > 0) $resumen .= ' | Saldo: $' . number_format($saldoTotal, 0, ',', '.');
+    if ($cliente->direccion) $resumen .= ' | Dir: ' . $cliente->direccion;
+    ?>
+    <div class="d-flex gap-2 mt-3 flex-wrap">
+        <?php if ($cliente->telefono): ?>
         <a href="tel:<?= htmlspecialchars($cliente->telefono) ?>" class="btn btn-outline-success flex-fill">
             <i class="bi bi-telephone me-1"></i> Llamar
         </a>
@@ -34,8 +41,14 @@ $saldoTotal         = array_sum(array_map(fn($c) => $c->saldo_pendiente, $credit
            class="btn btn-success flex-fill" target="_blank" rel="noopener">
             <i class="bi bi-whatsapp me-1"></i> WhatsApp
         </a>
+        <?php endif; ?>
+        <?php if ($adminWa): ?>
+        <a href="https://wa.me/<?= htmlspecialchars($adminWa) ?>?text=<?= urlencode('📋 Reporte cliente — ' . $resumen) ?>"
+           class="btn btn-outline-info w-100" target="_blank" rel="noopener">
+            <i class="bi bi-send me-1"></i> Reportar al supervisor
+        </a>
+        <?php endif; ?>
     </div>
-    <?php endif; ?>
 </div>
 
 <!-- Saldo total -->
@@ -43,7 +56,7 @@ $saldoTotal         = array_sum(array_map(fn($c) => $c->saldo_pendiente, $credit
 <div class="card bg-slate-800 border-warning border-opacity-50 p-3 mb-3">
     <div class="d-flex justify-content-between align-items-center">
         <span class="text-secondary small">Saldo total activo</span>
-        <span class="fw-bold text-warning fs-5">$<?= number_format($saldoTotal, 2, ',', '.') ?></span>
+        <span class="fw-bold text-warning fs-5">$<?= number_format($saldoTotal, 0, ',', '.') ?></span>
     </div>
     <div class="text-secondary small mt-1"><?= count($creditosActivos) ?> crédito(s) activo(s)</div>
 </div>
@@ -79,6 +92,42 @@ $saldoTotal         = array_sum(array_map(fn($c) => $c->saldo_pendiente, $credit
         </a>
     <?php endforeach; ?>
     </div>
+<?php endif; ?>
+
+<?php if (!empty($pagosRecientes)): ?>
+<div class="accordion mt-3" id="accordionPagos">
+    <div class="accordion-item bg-slate-800 border-secondary">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed bg-slate-800 text-light" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#colPagos">
+                <i class="bi bi-clock-history me-2 text-info"></i>
+                Últimos pagos
+                <span class="badge bg-secondary ms-2"><?= count($pagosRecientes) ?></span>
+            </button>
+        </h2>
+        <div id="colPagos" class="accordion-collapse collapse" data-bs-parent="#accordionPagos">
+            <div class="accordion-body p-0">
+                <div class="d-flex flex-column">
+                <?php foreach ($pagosRecientes as $p): ?>
+                    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top border-secondary">
+                        <div>
+                            <div class="text-light small fw-semibold">
+                                <?= date('d/m/Y', strtotime($p['fecha_pago_real'])) ?>
+                            </div>
+                            <div class="text-secondary" style="font-size:0.7rem;">
+                                <?= htmlspecialchars($p['credito_codigo']) ?>
+                            </div>
+                        </div>
+                        <div class="fw-bold text-success small">
+                            $<?= number_format((float)$p['monto_pagado'], 0, ',', '.') ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <?php endif; ?>
 
 <?php

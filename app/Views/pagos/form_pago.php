@@ -8,6 +8,7 @@ $creditoJson = $credito ? json_encode([
     'cliente_dni'     => $credito->cliente_dni,
     'saldo_pendiente' => $credito->saldo_pendiente,
     'estado'          => $credito->estado,
+    'id_cobrador'     => $credito->id_cobrador,
 ]) : 'null';
 
 $cuotasJson = json_encode(array_values($cuotasPendientes));
@@ -427,7 +428,8 @@ ob_start();
                                 <!-- Cobrador -->
                                 <div class="col-12 col-sm-6">
                                     <label class="form-label text-light">Cobrador</label>
-                                    <select name="id_cobrador" class="form-select bg-slate-900 border-secondary text-light">
+                                    <select name="id_cobrador" class="form-select bg-slate-900 border-secondary text-light"
+                                            x-model="cobradorId">
                                         <option value="">— Sin asignar —</option>
                                         <?php foreach ($personal as $p): ?>
                                             <option value="<?= $p->id_personal ?>"><?= htmlspecialchars($p->nombre) ?></option>
@@ -615,6 +617,7 @@ function pagoForm() {
         idCredito: <?= $credito ? $credito->id_credito : 'null' ?>,
         creditoSeleccionado: <?= $creditoJson ?>,
         cuotas: <?= $cuotasJson ?>,
+        cobradorId: <?= $credito && $credito->id_cobrador ? (int)$credito->id_cobrador : 'null' ?>,
         monto: '',
         fechaPagoReal: '',
         formaPago: 'efectivo',
@@ -695,6 +698,7 @@ function pagoForm() {
                     };
                     this.cuotas = j.data.cuotas;
                     this.idCredito = cr.id_credito;
+                    this.cobradorId = j.data.credito.id_cobrador || '';
                     this.saldoTrasP = j.data.credito.saldo_pendiente;
                     this.monto = '';
                     this.fifoAplicaciones = [];

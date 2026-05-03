@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Repositories\CajaRepository;
 use App\Repositories\ReporteRepository;
 
 class ReporteService
 {
     private ReporteRepository $repo;
+    private CajaRepository $cajaRepo;
 
     public function __construct()
     {
-        $this->repo = new ReporteRepository();
+        $this->repo     = new ReporteRepository();
+        $this->cajaRepo = new CajaRepository();
     }
 
     public function getResumenAdmin(): array
@@ -67,6 +70,36 @@ class ReporteService
     public function getRendicionesConDiferencia(string $desde, string $hasta): array
     {
         return $this->repo->getRendicionesConDiferencia($desde, $hasta);
+    }
+
+    public function getReporteFinanciero(string $desde, string $hasta): array
+    {
+        $cobradoRango  = $this->repo->getTotalCobradoEnRango($desde, $hasta);
+        $prestadoRango = $this->repo->getTotalPrestadoEnRango($desde, $hasta);
+        $cajaManuales  = $this->cajaRepo->getTotalesEnRango($desde, $hasta);
+        $diferencia    = $cobradoRango - $prestadoRango
+                       + (float)$cajaManuales['ingresos']
+                       - (float)$cajaManuales['egresos'];
+
+        $historicas   = $this->repo->getMetricasHistoricas();
+        $ingresos     = $this->cajaRepo->getTotalIngresos();
+        $egresos      = $this->cajaRepo->getTotalEgresos();
+        $saldoCaja    = $historicas['cobrado_total'] - $historicas['prestado_total'] + $ingresos - $egresos;
+
+        return [
+            'entre_fechas' => [
+                'cobrado'   => $cobradoRango,
+                'prestado'  => $prestadoRango,
+                'diferencia' => $diferencia,
+            ],
+            'historicas' => [
+                'saldo_caja'       => $saldoCaja,
+                'capital_activo'   => $historicas['capital_activo'],
+                'cobrado_total'    => $historicas['cobrado_total'],
+                'pendientes_cobro' => $historicas['pendientes_cobro'],
+            ],
+            'movimientos' => $this->repo->getHistorialMovimientos($desde, $hasta),
+        ];
     }
 
     public function exportAtrasoExcel(): void

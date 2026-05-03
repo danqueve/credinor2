@@ -161,6 +161,101 @@ class ClienteRepository
     }
 
     /**
+     * Todos los clientes con al menos un crédito activo asignado a un cobrador,
+     * incluyendo saldo_total y cuotas_vencidas para badges en la lista mobile.
+     * @return Cliente[]
+     */
+    public function findByCobrador(int $idCobrador, string $filtro = ''): array
+    {
+        $sql = "
+            SELECT c.*, z.nombre AS zona_nombre,
+                COALESCE(SUM(cr.saldo_pendiente), 0)                  AS saldo_total,
+                COALESCE(COUNT(cu.id_cuota), 0)                       AS cuotas_vencidas
+            FROM clientes c
+            LEFT JOIN zonas z ON c.id_zona = z.id_zona
+            JOIN creditos cr ON cr.id_cliente = c.id_cliente
+                             AND cr.estado = 'activo'
+                             AND cr.deleted_at IS NULL
+                             AND cr.id_cobrador = ?
+            LEFT JOIN cuotas cu ON cu.id_credito = cr.id_credito
+                                AND cu.estado = 'vencida'
+            WHERE c.deleted_at IS NULL
+        ";
+
+        if ($filtro === 'vencidos') {
+            $sql .= " HAVING cuotas_vencidas > 0";
+        } elseif ($filtro === 'al-dia') {
+            $sql .= " HAVING cuotas_vencidas = 0";
+        } elseif ($filtro === 'hoy') {
+            $sql .= " AND EXISTS (
+                SELECT 1 FROM cuotas cu2
+                JOIN creditos cr2 ON cu2.id_credito = cr2.id_credito
+                WHERE cr2.id_cliente = c.id_cliente
+                  AND cr2.id_cobrador = ?
+                  AND cu2.fecha_vencimiento = CURDATE()
+                  AND cu2.estado IN ('pendiente','vencida','parcial')
+            )";
+        }
+
+        $sql .= " GROUP BY c.id_cliente ORDER BY cuotas_vencidas DESC, c.nombre ASC";
+
+        $params = [$idCobrador];
+        if ($filtro === 'hoy') {
+            $params[] = $idCobrador;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        $list = [];
+        while ($row = $stmt->fetch()) {
+            $list[] = $this->hydrate($row);
+        }
+        return $list;
+    }
+
+    /**
+     * Búsqueda restringida a clientes con crédito activo asignado a un cobrador,
+     * incluyendo saldo_total y cuotas_vencidas para badges.
+     * @return Cliente[]
+     */
+    public function searchByCobrador(string $term, int $idCobrador, int $limit = 20): array
+    {
+        $like = "%$term%";
+        $stmt = $this->db->prepare("
+            SELECT c.*, z.nombre AS zona_nombre,
+                COALESCE(SUM(cr.saldo_pendiente), 0) AS saldo_total,
+                COALESCE(COUNT(cu.id_cuota), 0)      AS cuotas_vencidas
+            FROM clientes c
+            LEFT JOIN zonas z ON c.id_zona = z.id_zona
+            JOIN creditos cr ON cr.id_cliente = c.id_cliente
+                             AND cr.estado = 'activo'
+                             AND cr.deleted_at IS NULL
+                             AND cr.id_cobrador = ?
+            LEFT JOIN cuotas cu ON cu.id_credito = cr.id_credito
+                                AND cu.estado = 'vencida'
+            WHERE c.deleted_at IS NULL
+              AND (c.nombre LIKE ? OR c.dni LIKE ? OR c.direccion LIKE ? OR c.telefono LIKE ?)
+            GROUP BY c.id_cliente
+            ORDER BY cuotas_vencidas DESC, c.nombre ASC
+            LIMIT ?
+        ");
+        $stmt->bindValue(1, $idCobrador, PDO::PARAM_INT);
+        $stmt->bindValue(2, $like, PDO::PARAM_STR);
+        $stmt->bindValue(3, $like, PDO::PARAM_STR);
+        $stmt->bindValue(4, $like, PDO::PARAM_STR);
+        $stmt->bindValue(5, $like, PDO::PARAM_STR);
+        $stmt->bindValue(6, $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $list = [];
+        while ($row = $stmt->fetch()) {
+            $list[] = $this->hydrate($row);
+        }
+        return $list;
+    }
+
+    /**
      * Búsqueda para Autocomplete AJAX
      */
     public function searchByDniOrName(string $term): array
@@ -246,6 +341,8 @@ class ClienteRepository
         $c->cuotas_total      = (int)($row['cuotas_total']      ?? 0);
         $c->monto_cuota       = isset($row['monto_cuota'])      ? (float)$row['monto_cuota'] : null;
         $c->proxima_cuota     = $row['proxima_cuota']           ?? null;
+        $c->saldo_total       = (float)($row['saldo_total']     ?? 0);
+        $c->cuotas_vencidas   = (int)($row['cuotas_vencidas']   ?? 0);
         return $c;
     }
 }

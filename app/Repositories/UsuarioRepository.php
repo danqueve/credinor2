@@ -24,8 +24,8 @@ class UsuarioRepository
             SELECT u.*
             FROM usuarios u
             WHERE u.deleted_at IS NULL
-              AND u.rol IN ('admin','cobrador')
-            ORDER BY FIELD(u.rol,'admin','cobrador'), u.apellido ASC, u.nombre ASC
+              AND u.rol IN ('admin','supervisor','cobrador')
+            ORDER BY FIELD(u.rol,'admin','supervisor','cobrador'), u.apellido ASC, u.nombre ASC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -42,6 +42,18 @@ class UsuarioRepository
     {
         $stmt = $this->db->prepare("SELECT * FROM usuarios WHERE id_usuario = ? AND deleted_at IS NULL");
         $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ? $this->hydrate($row) : null;
+    }
+
+    public function findByPersonal(int $idPersonal): ?Usuario
+    {
+        $stmt = $this->db->prepare("
+            SELECT * FROM usuarios
+            WHERE id_personal = ? AND deleted_at IS NULL
+            LIMIT 1
+        ");
+        $stmt->execute([$idPersonal]);
         $row = $stmt->fetch();
         return $row ? $this->hydrate($row) : null;
     }

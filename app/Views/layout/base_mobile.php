@@ -48,6 +48,16 @@ $user   = \App\Helpers\Auth::user();
             border-radius: 0 0 2px 2px;
         }
         .bottom-nav a i { font-size: 1.35rem; }
+        .fab-admin {
+            position: fixed; bottom: 80px; right: 16px; z-index: 1020;
+            width: 52px; height: 52px; border-radius: 50%;
+            background: #25d366; color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; text-decoration: none;
+            box-shadow: 0 4px 12px rgba(37,211,102,.45);
+            transition: transform .15s, box-shadow .15s;
+        }
+        .fab-admin:hover { transform: scale(1.08); box-shadow: 0 6px 18px rgba(37,211,102,.55); color: #fff; }
         .page-header {
             background: linear-gradient(180deg, var(--slate-800, #1e293b) 0%, rgba(15,23,42,0.97) 100%);
             padding: 12px 16px 10px;
@@ -62,11 +72,15 @@ $user   = \App\Helpers\Auth::user();
 
 <!-- Header superior -->
 <div class="page-header d-flex align-items-center justify-content-between">
-    <div class="d-flex align-items-center gap-2">
-        <span class="fw-bold text-info" style="font-size: 1.1rem;">Credinor</span>
+    <div class="d-flex flex-column justify-content-center" style="line-height:1.2;">
+        <?php
+        $nombreCobrador = $user['nombre'] ?? $user['username'] ?? 'Cobrador';
+        ?>
+        <span class="fw-semibold text-light" style="font-size: 0.95rem;">
+            Hola, <?= htmlspecialchars($nombreCobrador) ?>
+        </span>
         <?php if (isset($titulo)): ?>
-            <span class="text-secondary">·</span>
-            <span class="text-light" style="font-size: 0.95rem;"><?= htmlspecialchars($titulo) ?></span>
+            <span class="text-secondary" style="font-size: 0.75rem;"><?= htmlspecialchars($titulo) ?></span>
         <?php endif; ?>
     </div>
     <a href="<?= $appUrl ?>/logout" class="btn btn-sm btn-outline-secondary py-1 px-2">
@@ -78,6 +92,18 @@ $user   = \App\Helpers\Auth::user();
 <main class="container-fluid px-3 py-3">
     <?= $content ?? '' ?>
 </main>
+
+<?php if (!empty($_ENV['ADMIN_WHATSAPP'])): ?>
+<?php
+$waUser   = \App\Helpers\Auth::user();
+$waNombre = $waUser['nombre'] ?? $waUser['username'] ?? 'cobrador';
+$waText   = urlencode('Hola, soy ' . $waNombre . ' (Credinor). Necesito ayuda.');
+?>
+<a href="https://wa.me/<?= htmlspecialchars($_ENV['ADMIN_WHATSAPP']) ?>?text=<?= $waText ?>"
+   class="fab-admin" target="_blank" rel="noopener" title="Contactar al admin">
+    <i class="bi bi-headset"></i>
+</a>
+<?php endif; ?>
 
 <!-- Navegación inferior (bottom nav) -->
 <nav class="bottom-nav">

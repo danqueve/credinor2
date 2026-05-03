@@ -33,6 +33,7 @@ return [
         '/api/creditos/preview'            => [\App\Controllers\Api\CreditoApiController::class, 'preview'],
         '/api/creditos/calendario_preview' => [\App\Controllers\Api\CreditoApiController::class, 'calendarioPreview'],
         '/api/creditos/activos_cliente'    => [\App\Controllers\Api\CreditoApiController::class, 'activosByCliente'],
+        '/api/creditos/buscar'             => [\App\Controllers\Api\CreditoApiController::class, 'buscar'],
 
         // Créditos
         '/creditos'              => [\App\Controllers\CreditoController::class, 'index'],
@@ -47,11 +48,19 @@ return [
         // Comisiones
         '/comisiones' => [\App\Controllers\ComisionController::class, 'index'],
 
+        // Rendiciones
+        '/rendiciones'        => [\App\Controllers\RendicionController::class, 'index'],
+        '/rendiciones/ficha'  => [\App\Controllers\RendicionController::class, 'ficha'],
+        '/rendiciones/nueva'  => [\App\Controllers\RendicionController::class, 'nueva'],
+
         // Reportes
         '/reportes'                    => [\App\Controllers\ReporteController::class, 'index'],
         '/reportes/vencimientos'       => [\App\Controllers\ReporteController::class, 'vencimientos'],
         '/reportes/exportar/cobranza' => [\App\Controllers\ReporteController::class, 'exportCobranza'],
         '/reportes/exportar/atraso'   => [\App\Controllers\ReporteController::class, 'exportAtraso'],
+
+        // Caja
+        '/caja' => [\App\Controllers\CajaController::class, 'index'],
 
         // Vista cliente — estado de cuenta
         '/mi-cuenta'         => [\App\Controllers\CuentaClienteController::class, 'index'],
@@ -63,6 +72,9 @@ return [
 
         // Vista Consulta (cobradores — mobile-first, solo lectura)
         '/consulta'          => [\App\Controllers\ConsultaController::class, 'dashboard'],
+        '/offline'           => [\App\Controllers\ConsultaController::class, 'offline'],
+        '/api/consulta/buscar_clientes' => [\App\Controllers\ConsultaController::class, 'buscarJson'],
+
         '/consulta/buscar'   => [\App\Controllers\ConsultaController::class, 'buscar'],
         '/consulta/cliente'  => [\App\Controllers\ConsultaController::class, 'fichaCliente'],
         '/consulta/credito'  => [\App\Controllers\ConsultaController::class, 'fichaCredito'],
@@ -108,10 +120,20 @@ return [
         '/comisiones/liquidar' => [\App\Controllers\ComisionController::class, 'liquidar'],
         '/comisiones/pagar'    => [\App\Controllers\ComisionController::class, 'marcarPagada'],
 
+        // Caja
+        '/caja/store'   => [\App\Controllers\CajaController::class, 'store'],
+        '/caja/delete'  => [\App\Controllers\CajaController::class, 'delete'],
+
+        // Rendiciones
+        '/rendiciones/store'   => [\App\Controllers\RendicionController::class, 'store'],
+
         // Usuarios (admin)
         '/usuarios/store'    => [\App\Controllers\UsuarioController::class, 'store'],
         '/usuarios/update'   => [\App\Controllers\UsuarioController::class, 'update'],
         '/usuarios/delete'   => [\App\Controllers\UsuarioController::class, 'delete'],
+
+        // Consulta cobrador
+        '/api/consulta/visita' => [\App\Controllers\ConsultaController::class, 'registrarVisita'],
     ],
 
 ];

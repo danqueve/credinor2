@@ -21,7 +21,7 @@ class UsuarioController
 
     public function index(): void
     {
-        Auth::requireAdmin();
+        Auth::requireAdminReadOnly();
 
         View::render('usuarios/index', [
             'titulo'   => 'Gestión de Usuarios',
@@ -52,7 +52,7 @@ class UsuarioController
         $rol      = Sanitizer::clean($_POST['rol'] ?? 'cobrador');
         $activo   = isset($_POST['activo']);
 
-        if (!in_array($rol, ['admin', 'cobrador'], true)) {
+        if (!in_array($rol, ['admin', 'supervisor', 'cobrador'], true)) {
             $rol = 'cobrador';
         }
 
@@ -112,7 +112,7 @@ class UsuarioController
         $rol      = Sanitizer::clean($_POST['rol'] ?? 'cobrador');
         $activo   = isset($_POST['activo']);
 
-        if (!in_array($rol, ['admin', 'cobrador'], true)) {
+        if (!in_array($rol, ['admin', 'supervisor', 'cobrador'], true)) {
             $rol = 'cobrador';
         }
 

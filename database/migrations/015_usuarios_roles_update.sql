@@ -4,14 +4,14 @@
 
 -- 1. Ampliar ENUM para poder migrar datos antes de quitar 'consulta'
 ALTER TABLE usuarios
-    MODIFY COLUMN rol ENUM('admin','consulta','cobrador','cliente') NOT NULL DEFAULT 'cobrador';
+    MODIFY COLUMN rol ENUM('admin','consulta','supervisor','cobrador','cliente') NOT NULL DEFAULT 'cobrador';
 
 -- 2. Renombrar 'consulta' → 'cobrador'
 UPDATE usuarios SET rol = 'cobrador' WHERE rol = 'consulta';
 
 -- 3. Dejar solo los 3 roles definitivos
 ALTER TABLE usuarios
-    MODIFY COLUMN rol ENUM('admin','cobrador','cliente') NOT NULL DEFAULT 'cobrador';
+    MODIFY COLUMN rol ENUM('admin','supervisor','cobrador','cliente') NOT NULL DEFAULT 'cobrador';
 
 -- 4. Agregar columna id_cliente (para usuarios tipo cliente)
 ALTER TABLE usuarios

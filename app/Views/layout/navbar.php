@@ -14,7 +14,7 @@
                                 <i class="bi bi-house-door"></i>
                             </a>
                         </li>
-                        <li class="breadcrumb-item active text-slate-400" aria-current="page" style="color:var(--slate-400);">
+                        <li class="breadcrumb-item active text-slate-400" aria-current="page">
                             <?= htmlspecialchars($titulo) ?>
                         </li>
                     </ol>
@@ -22,7 +22,13 @@
             <?php endif; ?>
         </div>
 
-        <div class="ms-auto d-flex align-items-center">
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <?php if ($user['rol'] === 'admin'): ?>
+            <a href="<?= $appUrl ?>/caja" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-safe2-fill me-1"></i><span class="d-none d-md-inline">Caja</span>
+            </a>
+            <?php endif; ?>
+
             <div class="dropdown">
                 <a class="nav-link dropdown-toggle text-light d-flex align-items-center gap-2" href="#"
                    id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">

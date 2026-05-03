@@ -140,8 +140,9 @@ ob_start();
                         <div class="col-md-4">
                             <label class="form-label text-light">Rol <span class="text-danger">*</span></label>
                             <select name="rol" class="form-select bg-slate-900 border-secondary text-light" required>
-                                <option value="admin"    <?= ($usuario->rol ?? '') === 'admin'    ? 'selected' : '' ?>>Admin</option>
-                                <option value="cobrador" <?= ($usuario->rol ?? 'cobrador') === 'cobrador' ? 'selected' : '' ?>>Cobrador</option>
+                                <option value="admin"      <?= ($usuario->rol ?? '') === 'admin'      ? 'selected' : '' ?>>Admin</option>
+                                <option value="supervisor" <?= ($usuario->rol ?? '') === 'supervisor' ? 'selected' : '' ?>>Supervisor</option>
+                                <option value="cobrador"   <?= ($usuario->rol ?? 'cobrador') === 'cobrador' ? 'selected' : '' ?>>Cobrador</option>
                             </select>
                         </div>
                         <div class="col-md-4 d-flex align-items-end">

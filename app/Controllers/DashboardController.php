@@ -20,6 +20,11 @@ class DashboardController
     {
         \App\Helpers\Auth::requireLogin();
 
+        if ((\App\Helpers\Auth::user()['rol'] ?? '') === 'cobrador') {
+            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/consulta');
+            exit;
+        }
+
         $data = $this->service->getData();
 
         \App\Helpers\View::render('dashboard/index', [

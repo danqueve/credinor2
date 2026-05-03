@@ -27,14 +27,26 @@ class Auth
     {
         self::requireLogin();
         if (Session::get('usuario_rol') !== 'admin') {
-            if (self::isAjax()) {
-                Response::json(false, null, ['Requiere permisos de administrador'], 'Acceso denegado', 403);
-            } else {
-                http_response_code(403);
-                require APP_PATH . '/Views/errors/403.php';
-                exit;
-            }
+            self::denyAdmin();
         }
+    }
+
+    public static function requireAdminReadOnly(): void
+    {
+        self::requireLogin();
+        if (!in_array(Session::get('usuario_rol'), ['admin', 'supervisor'], true)) {
+            self::denyAdmin();
+        }
+    }
+
+    public static function canManage(): bool
+    {
+        return Session::get('usuario_rol') === 'admin';
+    }
+
+    public static function canAdminRead(): bool
+    {
+        return in_array(Session::get('usuario_rol'), ['admin', 'supervisor'], true);
     }
 
     /** Permite admin y cobrador — bloquea clientes */
@@ -42,7 +54,7 @@ class Auth
     {
         self::requireLogin();
         $rol = Session::get('usuario_rol');
-        if (!in_array($rol, ['admin', 'cobrador'], true)) {
+        if (!in_array($rol, ['admin', 'supervisor', 'cobrador'], true)) {
             if ($rol === 'cliente') {
                 header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/mi-cuenta');
                 exit;
@@ -82,5 +94,16 @@ class Auth
     {
         return isset($_SERVER['HTTP_X_REQUESTED_WITH'])
             && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    }
+
+    private static function denyAdmin(): void
+    {
+        if (self::isAjax()) {
+            Response::json(false, null, ['Requiere permisos de administrador'], 'Acceso denegado', 403);
+        } else {
+            http_response_code(403);
+            require APP_PATH . '/Views/errors/403.php';
+            exit;
+        }
     }
 }

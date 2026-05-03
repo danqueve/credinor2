@@ -85,6 +85,7 @@ class PagoApiController
                 'cliente_dni'     => $credito->cliente_dni,
                 'saldo_pendiente' => $credito->saldo_pendiente,
                 'estado'          => $credito->estado,
+                'id_cobrador'     => $credito->id_cobrador,
             ],
             'cuotas' => $cuotas,
         ]);

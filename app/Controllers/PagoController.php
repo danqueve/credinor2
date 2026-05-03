@@ -32,7 +32,7 @@ class PagoController
 
     public function index(): void
     {
-        Auth::requireLogin();
+        Auth::requireAdminReadOnly();
 
         $page   = max(1, (int)($_GET['page'] ?? 1));
         $search = Sanitizer::clean($_GET['q'] ?? '');
@@ -116,7 +116,7 @@ class PagoController
 
     public function descargarRecibo(): void
     {
-        Auth::requireLogin();
+        Auth::requireAdminReadOnly();
 
         $idPago = (int)($_GET['id_pago'] ?? 0);
         $recibo = $this->pagoRepo->findReciboPorPago($idPago);

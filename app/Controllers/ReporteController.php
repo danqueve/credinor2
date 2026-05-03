@@ -20,30 +20,25 @@ class ReporteController
 
     public function index(): void
     {
-        Auth::requireAdmin();
+        Auth::requireAdminReadOnly();
 
         $desde = Sanitizer::clean($_GET['desde'] ?? date('Y-m-01'));
         $hasta = Sanitizer::clean($_GET['hasta'] ?? date('Y-m-d'));
-        $dias  = max(7, min(90, (int)($_GET['dias'] ?? 30)));
+
+        $reporte = $this->service->getReporteFinanciero($desde, $hasta);
 
         View::render('reportes/index', [
-            'titulo'         => 'Reportes y Analíticas',
-            'filtros'        => ['desde' => $desde, 'hasta' => $hasta, 'dias' => $dias],
-            'resumen'        => $this->service->getResumenAdmin(),
-            'cobranza'       => $this->service->getCobranza($desde, $hasta),
-            'ventas'         => $this->service->getVentas($desde, $hasta),
-            'comisiones'     => $this->service->getComisiones($desde, $hasta),
-            'flujoCaja'      => $this->service->getFlujoCaja($dias),
-            'cuotasHoy'      => $this->service->getCuotasHoy(date('Y-m-d')),
-            'atraso'         => $this->service->getClientesAtraso(),
-            'capitalRec'     => $this->service->getCapitalVsRecuperado($desde, $hasta),
-            'rendDiferencia' => $this->service->getRendicionesConDiferencia($desde, $hasta),
+            'titulo'      => 'Reportes y Analíticas',
+            'filtros'     => ['desde' => $desde, 'hasta' => $hasta],
+            'entreFechas' => $reporte['entre_fechas'],
+            'historicas'  => $reporte['historicas'],
+            'movimientos' => $reporte['movimientos'],
         ]);
     }
 
     public function vencimientos(): void
     {
-        Auth::requireAdmin();
+        Auth::requireAdminReadOnly();
         $dias = max(1, min(365, (int)($_GET['dias'] ?? 30)));
 
         View::render('reportes/vencimientos', [
@@ -55,7 +50,7 @@ class ReporteController
 
     public function exportCobranza(): void
     {
-        Auth::requireAdmin();
+        Auth::requireAdminReadOnly();
         $desde  = Sanitizer::clean($_GET['desde']  ?? date('Y-m-01'));
         $hasta  = Sanitizer::clean($_GET['hasta']  ?? date('Y-m-d'));
         $format = $_GET['format'] ?? 'excel';
@@ -69,7 +64,7 @@ class ReporteController
 
     public function exportAtraso(): void
     {
-        Auth::requireAdmin();
+        Auth::requireAdminReadOnly();
         $format = $_GET['format'] ?? 'excel';
 
         if ($format === 'pdf') {

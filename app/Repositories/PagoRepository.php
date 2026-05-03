@@ -78,6 +78,54 @@ class PagoRepository
         return $list;
     }
 
+    /** Total cobrado en una fecha por un cobrador (pagos no anulados). */
+    public function getTotalCobradoPorCobrador(int $idCobrador, string $fecha): float
+    {
+        $stmt = $this->db->prepare("
+            SELECT COALESCE(SUM(monto_pagado), 0)
+            FROM pagos
+            WHERE id_cobrador = ?
+              AND fecha_pago_real = ?
+              AND anulado = 0
+              AND deleted_at IS NULL
+        ");
+        $stmt->execute([$idCobrador, $fecha]);
+        return (float)$stmt->fetchColumn();
+    }
+
+    /** Últimos pagos de todos los créditos de un cliente (cross-credits). */
+    public function findRecentesPorCliente(int $idCliente, int $limit = 5): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT p.*,
+                cr.codigo AS credito_codigo,
+                pc_pers.nombre AS cobrador_nombre
+            FROM pagos p
+            JOIN creditos cr ON p.id_credito = cr.id_credito
+            LEFT JOIN personal pc_pers ON p.id_cobrador = pc_pers.id_personal
+            WHERE cr.id_cliente = ?
+              AND p.anulado = 0
+              AND p.deleted_at IS NULL
+            ORDER BY p.fecha_pago_real DESC, p.id_pago DESC
+            LIMIT ?
+        ");
+        $stmt->bindValue(1, $idCliente, \PDO::PARAM_INT);
+        $stmt->bindValue(2, $limit, \PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /** Verifica si un crédito pertenece a un cobrador dado. */
+    public function belongsToCobrador(int $idCredito, int $idCobrador): bool
+    {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) FROM creditos
+            WHERE id_credito = ? AND id_cobrador = ? AND deleted_at IS NULL
+        ");
+        $stmt->execute([$idCredito, $idCobrador]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
     /** @return Pago[] */
     public function findAll(int $limit = 30, int $offset = 0, string $search = ''): array
     {

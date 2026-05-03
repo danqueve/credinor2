@@ -1,5 +1,6 @@
 <?php
 $appUrl = $_ENV['APP_URL'] ?? '';
+$canManage = \App\Helpers\Auth::canManage();
 ob_start();
 ?>
 
@@ -10,9 +11,11 @@ ob_start();
             <i class="bi bi-shield-lock me-1"></i><?= count($usuarios) ?> usuarios registrados
         </p>
     </div>
-    <a href="<?= $appUrl ?>/usuarios/nuevo" class="btn btn-primary">
-        <i class="bi bi-person-plus-fill me-1"></i> Nuevo Usuario
-    </a>
+    <?php if ($canManage): ?>
+        <a href="<?= $appUrl ?>/usuarios/nuevo" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill me-1"></i> Nuevo Usuario
+        </a>
+    <?php endif; ?>
 </div>
 
 <?php if (isset($_SESSION['flash_success'])): ?>
@@ -54,9 +57,10 @@ ob_start();
                 <?php else: ?>
                     <?php foreach ($usuarios as $u):
                         $rolBadge = match ($u['rol']) {
-                            'admin'    => ['badge-activo',       'Admin'],
-                            'cobrador' => ['badge-refinanciado', 'Cobrador'],
-                            default    => ['bg-secondary',       $u['rol']],
+                            'admin'      => ['badge-activo',       'Admin'],
+                            'supervisor' => ['badge-info',         'Supervisor'],
+                            'cobrador'   => ['badge-refinanciado', 'Cobrador'],
+                            default      => ['bg-secondary',       $u['rol']],
                         };
                         $nombreCompleto = trim(($u['apellido'] ?? '') . ', ' . ($u['nombre'] ?? ''));
                         if ($nombreCompleto === ', ') $nombreCompleto = $u['username'];
@@ -83,6 +87,7 @@ ob_start();
                             <?= $u['ultimo_login'] ? date('d/m/Y H:i', strtotime($u['ultimo_login'])) : '—' ?>
                         </td>
                         <td class="text-end">
+                            <?php if ($canManage): ?>
                             <div class="d-flex gap-1 justify-content-end">
                                 <a href="<?= $appUrl ?>/usuarios/editar?id=<?= $u['id_usuario'] ?>"
                                    class="btn btn-sm btn-outline-secondary"
@@ -99,6 +104,9 @@ ob_start();
                                     </button>
                                 </form>
                             </div>
+                            <?php else: ?>
+                                <span class="text-secondary small">Solo lectura</span>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>

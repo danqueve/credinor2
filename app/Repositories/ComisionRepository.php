@@ -19,7 +19,10 @@ class ComisionRepository
     /**
      * Cobranza del período: suma de pagos no anulados agrupados por cobrador.
      */
-    public function getCobranzaPorPeriodo(string $periodo): array
+    /**
+     * Cobranza entre fechas: suma de pagos no anulados agrupados por cobrador.
+     */
+    public function getCobranzaPorRango(string $desde, string $hasta): array
     {
         $sql = "
             SELECT
@@ -29,21 +32,28 @@ class ComisionRepository
                 SUM(p.monto_pagado) AS monto_cobrado
             FROM pagos p
             JOIN personal pe ON p.id_cobrador = pe.id_personal
-            WHERE DATE_FORMAT(p.fecha_pago_real, '%Y-%m') = ?
+            WHERE p.fecha_pago_real BETWEEN ? AND ?
               AND p.anulado = 0
               AND p.id_cobrador IS NOT NULL
             GROUP BY p.id_cobrador, pe.nombre, pe.comision_pct
             ORDER BY pe.nombre ASC
         ";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$periodo]);
+        $stmt->execute([$desde, $hasta]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /** @deprecated Mantener compatibilidad – redirige al nuevo método */
+    public function getCobranzaPorPeriodo(string $periodo): array
+    {
+        [$desde, $hasta] = $this->rangoFromPeriodo($periodo);
+        return $this->getCobranzaPorRango($desde, $hasta);
+    }
+
     /**
-     * Ventas del período: suma de capital de créditos creados, agrupados por vendedor.
+     * Ventas entre fechas: suma de capital de créditos creados, agrupados por vendedor.
      */
-    public function getVentaPorPeriodo(string $periodo): array
+    public function getVentaPorRango(string $desde, string $hasta): array
     {
         $sql = "
             SELECT
@@ -54,15 +64,38 @@ class ComisionRepository
                 COUNT(*) AS cantidad_creditos
             FROM creditos cr
             JOIN personal pe ON cr.id_vendedor = pe.id_personal
-            WHERE DATE_FORMAT(cr.created_at, '%Y-%m') = ?
+            WHERE DATE(cr.created_at) BETWEEN ? AND ?
               AND cr.deleted_at IS NULL
               AND cr.id_vendedor IS NOT NULL
             GROUP BY cr.id_vendedor, pe.nombre, pe.comision_pct
             ORDER BY pe.nombre ASC
         ";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$periodo]);
+        $stmt->execute([$desde, $hasta]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /** @deprecated Mantener compatibilidad */
+    public function getVentaPorPeriodo(string $periodo): array
+    {
+        [$desde, $hasta] = $this->rangoFromPeriodo($periodo);
+        return $this->getVentaPorRango($desde, $hasta);
+    }
+
+    /**
+     * Convierte un período 'YYYY-MM' al primer y último día del mes.
+     * Convierte 'YYYY-MM-DD_YYYY-MM-DD' al rango explícito.
+     */
+    private function rangoFromPeriodo(string $periodo): array
+    {
+        if (str_contains($periodo, '_')) {
+            return explode('_', $periodo, 2);
+        }
+        // formato Y-m legacy
+        $d = \DateTime::createFromFormat('Y-m', $periodo);
+        $desde = $d->format('Y-m-01');
+        $hasta = $d->format('Y-m-t');
+        return [$desde, $hasta];
     }
 
     /**

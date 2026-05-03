@@ -1,5 +1,6 @@
 <?php
 $appUrl = $_ENV['APP_URL'] ?? 'http://localhost/credinor2/public';
+$canManage = \App\Helpers\Auth::canManage();
 ob_start();
 ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -15,42 +16,94 @@ ob_start();
 <?php endif; ?>
 
 <div class="row g-4 mb-4">
-    <!-- Selector de período + botón liquidar -->
+
+    <!-- ── Filtro de rango + botón liquidar ── -->
     <div class="col-12 col-md-5">
         <div class="card bg-slate-800 border-secondary">
             <div class="card-header bg-transparent border-secondary py-3">
-                <h6 class="mb-0 fw-bold text-light">Seleccionar Período</h6>
+                <h6 class="mb-0 fw-bold text-light"><i class="bi bi-calendar-range me-2 text-info"></i>Rango de fechas</h6>
             </div>
             <div class="card-body">
-                <form method="GET" action="<?= $appUrl ?>/comisiones" class="d-flex gap-2 align-items-end mb-3">
-                    <div class="flex-grow-1">
-                        <label class="form-label text-secondary small mb-1">Período</label>
-                        <input type="month" name="periodo" value="<?= htmlspecialchars($periodo) ?>"
-                               class="form-control bg-dark text-light border-secondary">
+                <form method="GET" action="<?= $appUrl ?>/comisiones" class="mb-3">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-6">
+                            <label class="form-label text-secondary small mb-1">Desde</label>
+                            <input type="date" name="desde" value="<?= htmlspecialchars($desde) ?>"
+                                   class="form-control bg-dark text-light border-secondary">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-secondary small mb-1">Hasta</label>
+                            <input type="date" name="hasta" value="<?= htmlspecialchars($hasta) ?>"
+                                   class="form-control bg-dark text-light border-secondary">
+                        </div>
+                        <div class="col-12 mt-1">
+                            <button type="submit" class="btn btn-outline-info w-100">
+                                <i class="bi bi-search me-1"></i>Ver comisiones
+                            </button>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-outline-info">Ver</button>
                 </form>
 
-                <form method="POST" action="<?= $appUrl ?>/comisiones/liquidar"
-                      onsubmit="return confirm('¿Generar/recalcular liquidación para <?= htmlspecialchars($periodo) ?>?')">
-                    <input type="hidden" name="periodo" value="<?= htmlspecialchars($periodo) ?>">
-                    <button type="submit" class="btn btn-warning w-100">
-                        <i class="bi bi-calculator me-1"></i> Liquidar <?= htmlspecialchars($periodo) ?>
-                    </button>
-                </form>
+                <?php if ($canManage && $esPreview): ?>
+                    <!-- Preview: aún no liquidado, ofrecer liquidar -->
+                    <form method="POST" action="<?= $appUrl ?>/comisiones/liquidar"
+                          onsubmit="return confirm('¿Generar/recalcular liquidación para <?= htmlspecialchars($desde) ?> → <?= htmlspecialchars($hasta) ?>?')">
+                        <?= \App\Helpers\Csrf::getFormField() ?>
+                        <input type="hidden" name="desde" value="<?= htmlspecialchars($desde) ?>">
+                        <input type="hidden" name="hasta" value="<?= htmlspecialchars($hasta) ?>">
+                        <button type="submit" class="btn btn-warning w-100">
+                            <i class="bi bi-calculator me-1"></i>Liquidar este período
+                        </button>
+                    </form>
+                    <div class="mt-2 text-secondary small text-center">
+                        <i class="bi bi-eye me-1"></i>Vista previa — aún no guardada
+                    </div>
+                <?php elseif (!$esPreview): ?>
+                    <!-- Ya liquidado -->
+                    <div class="alert alert-success py-2 mb-2 text-center small">
+                        <i class="bi bi-check-circle me-1"></i>Liquidación guardada
+                    </div>
+                    <?php if ($canManage): ?>
+                    <form method="POST" action="<?= $appUrl ?>/comisiones/liquidar"
+                          onsubmit="return confirm('¿Recalcular la liquidación para <?= htmlspecialchars($desde) ?> → <?= htmlspecialchars($hasta) ?>? Las comisiones no pagadas se borrarán.')">
+                        <?= \App\Helpers\Csrf::getFormField() ?>
+                        <input type="hidden" name="desde" value="<?= htmlspecialchars($desde) ?>">
+                        <input type="hidden" name="hasta" value="<?= htmlspecialchars($hasta) ?>">
+                        <button type="submit" class="btn btn-outline-warning w-100 btn-sm">
+                            <i class="bi bi-arrow-repeat me-1"></i>Recalcular
+                        </button>
+                    </form>
+                    <?php endif; ?>
+                <?php endif; ?>
             </div>
         </div>
 
         <?php if (!empty($periodos)): ?>
         <div class="card bg-slate-800 border-secondary mt-3">
-            <div class="card-header bg-transparent border-secondary py-3">
-                <h6 class="mb-0 fw-bold text-light">Períodos liquidados</h6>
+            <div class="card-header bg-transparent border-secondary py-2">
+                <h6 class="mb-0 fw-bold text-light small">Períodos liquidados</h6>
             </div>
-            <div class="list-group list-group-flush">
-                <?php foreach ($periodos as $p): ?>
-                    <a href="<?= $appUrl ?>/comisiones?periodo=<?= $p ?>"
-                       class="list-group-item list-group-item-action bg-transparent border-secondary text-light <?= $p === $periodo ? 'active' : '' ?>">
-                        <i class="bi bi-calendar3 me-2 text-secondary"></i><?= $p ?>
+            <div class="list-group list-group-flush" style="max-height:260px;overflow-y:auto;">
+                <?php foreach ($periodos as $p):
+                    // Mostrar rango amigable
+                    if (str_contains($p, '_')) {
+                        [$pd, $ph] = explode('_', $p, 2);
+                        $label = date('d/m/y', strtotime($pd)) . ' → ' . date('d/m/y', strtotime($ph));
+                    } else {
+                        $label = $p;
+                    }
+                    $activeClass = ($p === $periodo) ? 'active' : '';
+                    // Armar href según tipo de período
+                    if (str_contains($p, '_')) {
+                        [$pd, $ph] = explode('_', $p, 2);
+                        $href = "$appUrl/comisiones?desde=$pd&hasta=$ph";
+                    } else {
+                        $href = "$appUrl/comisiones?periodo=$p";
+                    }
+                ?>
+                    <a href="<?= $href ?>"
+                       class="list-group-item list-group-item-action bg-transparent border-secondary text-light py-2 small <?= $activeClass ?>">
+                        <i class="bi bi-calendar-check me-2 text-secondary"></i><?= htmlspecialchars($label) ?>
                     </a>
                 <?php endforeach; ?>
             </div>
@@ -58,13 +111,20 @@ ob_start();
         <?php endif; ?>
     </div>
 
-    <!-- Tabla de liquidación -->
+    <!-- ── Tabla de liquidación / preview ── -->
     <div class="col-12 col-md-7">
         <div class="card bg-slate-800 border-secondary">
-            <div class="card-header bg-transparent border-secondary py-3 d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 fw-bold text-light">Liquidación — <?= htmlspecialchars($periodo) ?></h6>
+            <div class="card-header bg-transparent border-secondary py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h6 class="mb-0 fw-bold text-light">
+                    <?php if ($esPreview): ?>
+                        <span class="badge bg-secondary me-1">Preview</span>
+                    <?php else: ?>
+                        <span class="badge bg-success me-1">Liquidado</span>
+                    <?php endif; ?>
+                    <?= date('d/m/Y', strtotime($desde)) ?> → <?= date('d/m/Y', strtotime($hasta)) ?>
+                </h6>
                 <?php if (!empty($liquidacion)): ?>
-                    <span class="badge bg-warning text-dark">
+                    <span class="badge bg-warning text-dark fs-6">
                         Total: $<?= number_format($totales['total'], 2, ',', '.') ?>
                     </span>
                 <?php endif; ?>
@@ -73,8 +133,8 @@ ob_start();
                 <?php if (empty($liquidacion)): ?>
                     <div class="text-center py-5 text-secondary">
                         <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                        Sin liquidación para este período.<br>
-                        <small>Usá el botón "Liquidar" para calcularla.</small>
+                        Sin actividad en este rango de fechas.<br>
+                        <small>No hay pagos ni créditos registrados entre <?= date('d/m/Y', strtotime($desde)) ?> y <?= date('d/m/Y', strtotime($hasta)) ?>.</small>
                     </div>
                 <?php else: ?>
                     <div class="table-responsive">
@@ -105,18 +165,22 @@ ob_start();
                                         <td class="text-end text-secondary"><?= number_format((float)$row['pct'], 2) ?>%</td>
                                         <td class="text-end fw-bold text-warning">$<?= number_format((float)$row['monto_comision'], 2, ',', '.') ?></td>
                                         <td class="text-center">
-                                            <?php if ($row['pagada']): ?>
+                                            <?php if ($esPreview): ?>
+                                                <span class="badge bg-secondary">Preview</span>
+                                            <?php elseif ($row['pagada']): ?>
                                                 <span class="badge bg-success"><i class="bi bi-check-lg me-1"></i>Pagada</span>
                                             <?php else: ?>
                                                 <span class="badge bg-secondary">Pendiente</span>
                                             <?php endif; ?>
                                         </td>
                                         <td class="text-end">
-                                            <?php if (!$row['pagada']): ?>
+                                            <?php if ($canManage && !$esPreview && !$row['pagada'] && $row['id_comision']): ?>
                                                 <form method="POST" action="<?= $appUrl ?>/comisiones/pagar"
                                                       onsubmit="return confirm('¿Marcar como pagada?')" class="d-inline">
+                                                    <?= \App\Helpers\Csrf::getFormField() ?>
                                                     <input type="hidden" name="id_comision" value="<?= $row['id_comision'] ?>">
-                                                    <input type="hidden" name="periodo" value="<?= htmlspecialchars($periodo) ?>">
+                                                    <input type="hidden" name="desde" value="<?= htmlspecialchars($desde) ?>">
+                                                    <input type="hidden" name="hasta" value="<?= htmlspecialchars($hasta) ?>">
                                                     <button type="submit" class="btn btn-xs btn-outline-success py-0 px-2">
                                                         <i class="bi bi-check2"></i>
                                                     </button>

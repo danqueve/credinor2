@@ -31,7 +31,7 @@ class ClienteController
 
     public function index(): void
     {
-        Auth::requireLogin();
+        Auth::requireAdminReadOnly();
         $page = max(1, (int)($_GET['page'] ?? 1));
         $search = Sanitizer::clean($_GET['q'] ?? '');
         $limit = 20;
@@ -53,7 +53,7 @@ class ClienteController
 
     public function ficha(): void
     {
-        Auth::requireLogin();
+        Auth::requireAdminReadOnly();
         $id = (int)($_GET['id'] ?? 0);
         $cliente = $this->clienteRepo->findById($id);
 

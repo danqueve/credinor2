@@ -333,6 +333,122 @@ class ReporteRepository
     }
 
     /**
+     * Total cobrado (pagos no anulados) en un rango de fechas.
+     */
+    public function getTotalCobradoEnRango(string $desde, string $hasta): float
+    {
+        $stmt = $this->db->prepare("
+            SELECT COALESCE(SUM(monto_pagado), 0)
+            FROM pagos
+            WHERE anulado = 0 AND fecha_pago_real BETWEEN ? AND ?
+        ");
+        $stmt->execute([$desde, $hasta]);
+        return (float)$stmt->fetchColumn();
+    }
+
+    /**
+     * Total capital prestado (créditos no anulados/borrados) en un rango de fechas.
+     */
+    public function getTotalPrestadoEnRango(string $desde, string $hasta): float
+    {
+        $stmt = $this->db->prepare("
+            SELECT COALESCE(SUM(capital), 0)
+            FROM creditos
+            WHERE deleted_at IS NULL AND estado != 'anulado'
+              AND fecha_inicio BETWEEN ? AND ?
+        ");
+        $stmt->execute([$desde, $hasta]);
+        return (float)$stmt->fetchColumn();
+    }
+
+    /**
+     * Métricas históricas (sin filtro de fecha).
+     */
+    public function getMetricasHistoricas(): array
+    {
+        $cobradoTotal = (float)$this->db->query("
+            SELECT COALESCE(SUM(monto_pagado), 0) FROM pagos WHERE anulado = 0
+        ")->fetchColumn();
+
+        $prestadoTotal = (float)$this->db->query("
+            SELECT COALESCE(SUM(capital), 0) FROM creditos
+            WHERE deleted_at IS NULL AND estado != 'anulado'
+        ")->fetchColumn();
+
+        $capitalActivo = (float)$this->db->query("
+            SELECT COALESCE(SUM(saldo_pendiente), 0) FROM creditos
+            WHERE estado = 'activo' AND deleted_at IS NULL
+        ")->fetchColumn();
+
+        $pendientesCobro = (float)$this->db->query("
+            SELECT COALESCE(SUM(cu.monto_esperado - cu.monto_pagado), 0)
+            FROM cuotas cu
+            JOIN creditos cr ON cu.id_credito = cr.id_credito
+            WHERE cu.estado IN ('pendiente','parcial','vencida')
+              AND cr.estado = 'activo' AND cr.deleted_at IS NULL
+        ")->fetchColumn();
+
+        return [
+            'cobrado_total'   => $cobradoTotal,
+            'prestado_total'  => $prestadoTotal,
+            'capital_activo'  => $capitalActivo,
+            'pendientes_cobro' => $pendientesCobro,
+        ];
+    }
+
+    /**
+     * Historial de movimientos unificado (pagos + créditos + caja manual) en un rango.
+     */
+    public function getHistorialMovimientos(string $desde, string $hasta): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT fecha, tipo, monto, detalle, usuario FROM (
+                SELECT
+                    pa.fecha_pago_real AS fecha,
+                    'cobranza' AS tipo,
+                    pa.monto_pagado AS monto,
+                    CONCAT('Pago ', cr.codigo, ' — ', cl.nombre, ' ', COALESCE(cl.apellido,'')) AS detalle,
+                    COALESCE(u.nombre, '—') AS usuario
+                FROM pagos pa
+                JOIN creditos cr ON pa.id_credito = cr.id_credito
+                JOIN clientes cl ON cr.id_cliente = cl.id_cliente
+                LEFT JOIN usuarios u ON pa.created_by = u.id_usuario
+                WHERE pa.anulado = 0 AND pa.fecha_pago_real BETWEEN ? AND ?
+
+                UNION ALL
+
+                SELECT
+                    cr.fecha_inicio AS fecha,
+                    'prestamo' AS tipo,
+                    cr.capital AS monto,
+                    CONCAT('Crédito ', cr.codigo, ' — ', cl.nombre, ' ', COALESCE(cl.apellido,'')) AS detalle,
+                    COALESCE(u.nombre, '—') AS usuario
+                FROM creditos cr
+                JOIN clientes cl ON cr.id_cliente = cl.id_cliente
+                LEFT JOIN usuarios u ON cr.created_by = u.id_usuario
+                WHERE cr.deleted_at IS NULL AND cr.estado != 'anulado'
+                  AND cr.fecha_inicio BETWEEN ? AND ?
+
+                UNION ALL
+
+                SELECT
+                    cm.fecha,
+                    cm.tipo,
+                    cm.monto,
+                    cm.concepto AS detalle,
+                    COALESCE(u.nombre, '—') AS usuario
+                FROM caja_movimientos cm
+                LEFT JOIN usuarios u ON cm.created_by = u.id_usuario
+                WHERE cm.deleted_at IS NULL AND cm.fecha BETWEEN ? AND ?
+            ) m
+            ORDER BY fecha DESC, tipo ASC
+            LIMIT 200
+        ");
+        $stmt->execute([$desde, $hasta, $desde, $hasta, $desde, $hasta]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Calcula comisiones sugeridas basadas en capital prestado (ventas)
      * y monto cobrado (cobranza) en un periodo.
      */

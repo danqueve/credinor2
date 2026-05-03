@@ -20,14 +20,11 @@ class CreditoRepository
 
     public function generateCodigo(): string
     {
-        $year = date('Y');
-        $prefix = "CR-{$year}-";
-        $stmt = $this->db->prepare(
-            "SELECT MAX(CAST(SUBSTRING(codigo, ?) AS UNSIGNED)) FROM creditos WHERE codigo LIKE ?"
+        $stmt = $this->db->query(
+            "SELECT MAX(CAST(SUBSTRING(codigo, 3) AS UNSIGNED)) FROM creditos WHERE codigo LIKE 'C-%'"
         );
-        $stmt->execute([strlen($prefix) + 1, "{$prefix}%"]);
         $last = (int)$stmt->fetchColumn();
-        return $prefix . str_pad((string)($last + 1), 5, '0', STR_PAD_LEFT);
+        return 'C-' . str_pad((string)($last + 1), 5, '0', STR_PAD_LEFT);
     }
 
     public function insert(Credito $c): int
@@ -234,6 +231,28 @@ class CreditoRepository
         return $list;
     }
 
+    /** @return Credito[] Créditos de un cliente filtrados por cobrador */
+    public function findByClienteAndCobrador(int $idCliente, int $idCobrador): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT cr.*,
+                pv.nombre AS vendedor_nombre,
+                pc.nombre AS cobrador_nombre
+            FROM creditos cr
+            LEFT JOIN personal pv ON cr.id_vendedor = pv.id_personal
+            LEFT JOIN personal pc ON cr.id_cobrador = pc.id_personal
+            WHERE cr.id_cliente = ? AND cr.id_cobrador = ? AND cr.deleted_at IS NULL
+            ORDER BY (cr.estado = 'activo') DESC, cr.id_credito DESC
+        ");
+        $stmt->execute([$idCliente, $idCobrador]);
+
+        $list = [];
+        while ($row = $stmt->fetch()) {
+            $list[] = $this->hydrate($row);
+        }
+        return $list;
+    }
+
     public function updateEstado(int $idCredito, string $estado, int $updatedBy): void
     {
         $stmt = $this->db->prepare("
@@ -264,7 +283,7 @@ class CreditoRepository
             WHERE cu.fecha_vencimiento = ?
               AND cr.estado = 'activo'
               AND cr.deleted_at IS NULL
-              AND cu.estado NOT IN ('pagada', 'condonada')
+              AND cu.estado <> 'condonada'
         ";
         $params = [$fecha];
 
