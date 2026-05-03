@@ -36,17 +36,21 @@ class PagoController
 
         $page   = max(1, (int)($_GET['page'] ?? 1));
         $search = Sanitizer::clean($_GET['q'] ?? '');
+        $desde  = Sanitizer::clean($_GET['desde'] ?? '');
+        $hasta  = Sanitizer::clean($_GET['hasta'] ?? '');
         $limit  = 30;
         $offset = ($page - 1) * $limit;
 
-        $pagos      = $this->pagoRepo->findAll($limit, $offset, $search);
-        $total      = $this->pagoRepo->countAll($search);
+        $pagos      = $this->pagoRepo->findAll($limit, $offset, $search, $desde, $hasta);
+        $total      = $this->pagoRepo->countAll($search, $desde, $hasta);
         $totalPages = (int)ceil($total / $limit);
 
         View::render('pagos/index', [
             'titulo'     => 'Historial de Pagos',
             'pagos'      => $pagos,
             'search'     => $search,
+            'desde'      => $desde,
+            'hasta'      => $hasta,
             'page'       => $page,
             'totalPages' => $totalPages,
             'total'      => $total,

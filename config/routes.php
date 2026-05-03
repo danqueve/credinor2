@@ -39,6 +39,7 @@ return [
         '/creditos'              => [\App\Controllers\CreditoController::class, 'index'],
         '/creditos/ficha'        => [\App\Controllers\CreditoController::class, 'ficha'],
         '/creditos/nuevo'        => [\App\Controllers\CreditoController::class, 'create'],
+        '/creditos/editar'       => [\App\Controllers\CreditoController::class, 'edit'],
         '/creditos/refinanciar'  => [\App\Controllers\CreditoController::class, 'refinanciarForm'],
 
         // Pagos
@@ -58,6 +59,9 @@ return [
         '/reportes/vencimientos'       => [\App\Controllers\ReporteController::class, 'vencimientos'],
         '/reportes/exportar/cobranza' => [\App\Controllers\ReporteController::class, 'exportCobranza'],
         '/reportes/exportar/atraso'   => [\App\Controllers\ReporteController::class, 'exportAtraso'],
+        '/reportes/exportar/clientes' => [\App\Controllers\ReporteController::class, 'exportClientes'],
+        '/reportes/exportar/creditos' => [\App\Controllers\ReporteController::class, 'exportCreditos'],
+        '/reportes/exportar/cobros'   => [\App\Controllers\ReporteController::class, 'exportCobros'],
 
         // Caja
         '/caja' => [\App\Controllers\CajaController::class, 'index'],
@@ -108,6 +112,7 @@ return [
 
         // Créditos
         '/creditos/store'        => [\App\Controllers\CreditoController::class, 'store'],
+        '/creditos/update'       => [\App\Controllers\CreditoController::class, 'update'],
         '/creditos/anular'       => [\App\Controllers\CreditoController::class, 'anular'],
         '/creditos/refinanciar'  => [\App\Controllers\CreditoController::class, 'refinanciar'],
         '/creditos/incobrable'   => [\App\Controllers\CreditoController::class, 'marcarIncobrable'],

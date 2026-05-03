@@ -71,6 +71,65 @@ class CreditoRepository
         }
     }
 
+    public function hasPagos(int $idCredito): bool
+    {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*)
+            FROM pagos
+            WHERE id_credito = ?
+              AND deleted_at IS NULL
+        ");
+        $stmt->execute([$idCredito]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    public function updateEditable(Credito $c, bool $actualizarFinancieros): void
+    {
+        if ($actualizarFinancieros) {
+            $stmt = $this->db->prepare("
+                UPDATE creditos
+                SET id_vendedor = ?, id_cobrador = ?,
+                    capital = ?, cantidad_cuotas = ?, valor_cuota = ?, monto_total = ?,
+                    interes_implicito = ?, interes_implicito_pct = ?, gastos_admin = ?,
+                    frecuencia = ?, fecha_inicio = ?, fecha_fin_estimada = ?,
+                    saldo_pendiente = ?, destino_opcional = ?, observaciones = ?,
+                    updated_by = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id_credito = ?
+            ");
+            $stmt->execute([
+                $c->id_vendedor, $c->id_cobrador,
+                $c->capital, $c->cantidad_cuotas, $c->valor_cuota, $c->monto_total,
+                $c->interes_implicito, $c->interes_implicito_pct, $c->gastos_admin,
+                $c->frecuencia, $c->fecha_inicio, $c->fecha_fin_estimada,
+                $c->saldo_pendiente, $c->destino_opcional, $c->observaciones,
+                $c->updated_by, $c->id_credito,
+            ]);
+            return;
+        }
+
+        $stmt = $this->db->prepare("
+            UPDATE creditos
+            SET id_vendedor = ?, id_cobrador = ?,
+                destino_opcional = ?, observaciones = ?,
+                updated_by = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id_credito = ?
+        ");
+        $stmt->execute([
+            $c->id_vendedor, $c->id_cobrador,
+            $c->destino_opcional, $c->observaciones,
+            $c->updated_by, $c->id_credito,
+        ]);
+    }
+
+    /**
+     * @param array<int, array{numero_cuota: int, fecha_vencimiento: string, monto_esperado: float}> $cuotas
+     */
+    public function replaceCuotasSinPagos(int $idCredito, array $cuotas): void
+    {
+        $this->db->prepare("DELETE FROM cuotas WHERE id_credito = ?")->execute([$idCredito]);
+        $this->insertCuotas($idCredito, $cuotas);
+    }
+
     /** @return Credito[] */
     public function findAll(int $limit = 20, int $offset = 0, string $search = '', string $estado = ''): array
     {

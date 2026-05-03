@@ -127,7 +127,7 @@ class PagoRepository
     }
 
     /** @return Pago[] */
-    public function findAll(int $limit = 30, int $offset = 0, string $search = ''): array
+    public function findAll(int $limit = 30, int $offset = 0, string $search = '', string $desde = '', string $hasta = ''): array
     {
         $sql = "
             SELECT p.*,
@@ -147,6 +147,14 @@ class PagoRepository
             $params[] = "%$search%";
             $params[] = "%$search%";
         }
+        if ($desde !== '') {
+            $sql .= " AND p.fecha_pago_real >= ?";
+            $params[] = $desde;
+        }
+        if ($hasta !== '') {
+            $sql .= " AND p.fecha_pago_real <= ?";
+            $params[] = $hasta;
+        }
         $sql .= " ORDER BY p.fecha_pago_real DESC, p.id_pago DESC";
 
         $stmt = $this->db->prepare($sql . " LIMIT ? OFFSET ?");
@@ -165,7 +173,7 @@ class PagoRepository
         return $list;
     }
 
-    public function countAll(string $search = ''): int
+    public function countAll(string $search = '', string $desde = '', string $hasta = ''): int
     {
         $sql = "
             SELECT COUNT(*) FROM pagos p
@@ -179,6 +187,14 @@ class PagoRepository
             $params[] = "%$search%";
             $params[] = "%$search%";
             $params[] = "%$search%";
+        }
+        if ($desde !== '') {
+            $sql .= " AND p.fecha_pago_real >= ?";
+            $params[] = $desde;
+        }
+        if ($hasta !== '') {
+            $sql .= " AND p.fecha_pago_real <= ?";
+            $params[] = $hasta;
         }
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);

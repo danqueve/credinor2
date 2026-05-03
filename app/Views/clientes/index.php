@@ -13,11 +13,17 @@ ob_start();
             <?= number_format($total ?? 0, 0, ',', '.') ?> clientes registrados
         </p>
     </div>
+    <div class="d-flex gap-2 flex-wrap justify-content-end">
+        <a href="<?= $appUrl ?>/reportes/exportar/clientes?format=pdf&q=<?= urlencode($search ?? '') ?>"
+           class="btn btn-outline-danger">
+            <i class="bi bi-file-pdf me-1"></i> Exportar PDF
+        </a>
     <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
         <a href="<?= $appUrl ?>/clientes/nuevo" class="btn btn-primary">
             <i class="bi bi-person-plus-fill me-1"></i> Nuevo Cliente
         </a>
     <?php endif; ?>
+    </div>
 </div>
 
 <?php if (isset($_SESSION['flash_success'])): ?>

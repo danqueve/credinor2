@@ -23,12 +23,23 @@ $tipoBadge = [
     <h2 class="h3 mb-0 text-white fw-bold">
         <i class="bi bi-bar-chart-line me-2 text-info"></i>Reportes y Analíticas
     </h2>
+    <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
+        <a href="<?= $appUrl ?>/reportes/exportar/clientes?format=pdf" class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-file-pdf me-1"></i>Clientes
+        </a>
+        <a href="<?= $appUrl ?>/reportes/exportar/creditos?format=pdf" class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-file-pdf me-1"></i>Creditos
+        </a>
+        <a href="<?= $appUrl ?>/reportes/exportar/cobros?format=pdf&desde=<?= urlencode($d) ?>&hasta=<?= urlencode($h) ?>" class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-file-pdf me-1"></i>Cobros
+        </a>
     <form action="<?= $appUrl ?>/reportes" method="GET" class="d-flex gap-2 align-items-center flex-wrap">
         <input type="date" name="desde" class="form-control form-control-sm bg-slate-800 border-secondary text-light" value="<?= $d ?>">
         <span class="text-secondary small">—</span>
         <input type="date" name="hasta" class="form-control form-control-sm bg-slate-800 border-secondary text-light" value="<?= $h ?>">
         <button class="btn btn-sm btn-primary"><i class="bi bi-funnel me-1"></i>Filtrar</button>
     </form>
+    </div>
 </div>
 
 <!-- ① Sección Entre Fechas -->

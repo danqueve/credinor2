@@ -153,6 +153,61 @@ class CreditoController
 
     // ── Anular crédito (POST) ─────────────────────────────────────────────────
 
+    public function edit(): void
+    {
+        Auth::requireAdmin();
+
+        $id = (int)($_GET['id'] ?? 0);
+        $credito = $this->creditoRepo->findById($id);
+
+        if (!$credito || $credito->estado !== 'activo') {
+            $_SESSION['flash_error'] = 'Credito no valido para editar.';
+            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos');
+            exit;
+        }
+
+        View::render('creditos/form_editar', [
+            'titulo'     => 'Editar ' . $credito->codigo,
+            'credito'    => $credito,
+            'cliente'    => $this->clienteRepo->findById($credito->id_cliente),
+            'personal'   => $this->personalRepo->findAllActive(),
+            'tienePagos' => $this->creditoRepo->hasPagos($id),
+        ]);
+    }
+
+    public function update(): void
+    {
+        Auth::requireAdmin();
+
+        $idCredito = (int)($_POST['id_credito'] ?? 0);
+        $usuarioId = (int)($_SESSION['usuario_id'] ?? 0);
+
+        $data = [
+            'capital'          => (float)str_replace(',', '.', $_POST['capital']      ?? '0'),
+            'cantidad_cuotas'  => (int)($_POST['cantidad_cuotas'] ?? 0),
+            'valor_cuota'      => (float)str_replace(',', '.', $_POST['valor_cuota']  ?? '0'),
+            'gastos_admin'     => (float)str_replace(',', '.', $_POST['gastos_admin'] ?? '0'),
+            'frecuencia'       => Sanitizer::clean($_POST['frecuencia']    ?? ''),
+            'fecha_inicio'     => Sanitizer::clean($_POST['fecha_inicio']  ?? ''),
+            'id_vendedor'      => !empty($_POST['id_vendedor']) ? (int)$_POST['id_vendedor'] : null,
+            'id_cobrador'      => !empty($_POST['id_cobrador']) ? (int)$_POST['id_cobrador'] : null,
+            'destino_opcional' => Sanitizer::clean($_POST['destino_opcional'] ?? ''),
+            'observaciones'    => Sanitizer::clean($_POST['observaciones']    ?? ''),
+        ];
+
+        $result = $this->creditoService->editar($idCredito, $data, $usuarioId);
+
+        if (!$result['ok']) {
+            $_SESSION['flash_error'] = $result['message'];
+            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos/editar?id=' . $idCredito);
+            exit;
+        }
+
+        $_SESSION['flash_success'] = $result['message'];
+        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos/ficha?id=' . $idCredito);
+        exit;
+    }
+
     public function anular(): void
     {
         Auth::requireAdmin();

@@ -5,11 +5,17 @@ ob_start();
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="h3 mb-0 text-white fw-bold"><i class="bi bi-receipt me-2 text-success"></i>Historial de Pagos</h2>
+    <div class="d-flex gap-2 flex-wrap justify-content-end">
+        <a href="<?= $appUrl ?>/reportes/exportar/cobros?format=pdf&q=<?= urlencode($search ?? '') ?>&desde=<?= urlencode($desde ?? '') ?>&hasta=<?= urlencode($hasta ?? '') ?>"
+           class="btn btn-outline-danger">
+            <i class="bi bi-file-pdf me-1"></i> Exportar PDF
+        </a>
     <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
         <a href="<?= $appUrl ?>/pagos/nuevo" class="btn btn-success">
             <i class="bi bi-plus-lg me-1"></i> Registrar Pago
         </a>
     <?php endif; ?>
+    </div>
 </div>
 
 <?php if (isset($_SESSION['flash_success'])): ?>
@@ -24,17 +30,27 @@ ob_start();
 <div class="card bg-slate-800 border-secondary mb-4">
     <div class="card-body py-3">
         <form method="GET" action="<?= $appUrl ?>/pagos" class="row g-2 align-items-end">
-            <div class="col-12 col-md-6">
+            <div class="col-12 col-md-4">
                 <input type="text" name="q" value="<?= htmlspecialchars($search) ?>"
                        class="form-control form-control-sm bg-slate-700 border-secondary text-light"
                        placeholder="Buscar por cliente, DNI o código de crédito...">
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label text-secondary small mb-1">Desde</label>
+                <input type="date" name="desde" value="<?= htmlspecialchars($desde ?? '') ?>"
+                       class="form-control form-control-sm bg-slate-700 border-secondary text-light">
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label text-secondary small mb-1">Hasta</label>
+                <input type="date" name="hasta" value="<?= htmlspecialchars($hasta ?? '') ?>"
+                       class="form-control form-control-sm bg-slate-700 border-secondary text-light">
             </div>
             <div class="col-4 col-md-2">
                 <button type="submit" class="btn btn-sm btn-primary w-100">
                     <i class="bi bi-search me-1"></i> Buscar
                 </button>
             </div>
-            <?php if ($search !== ''): ?>
+            <?php if ($search !== '' || ($desde ?? '') !== '' || ($hasta ?? '') !== ''): ?>
                 <div class="col-4 col-md-2">
                     <a href="<?= $appUrl ?>/pagos" class="btn btn-sm btn-outline-secondary w-100">
                         <i class="bi bi-x-lg me-1"></i> Limpiar
@@ -134,7 +150,7 @@ ob_start();
                 <?php for ($p2 = 1; $p2 <= $totalPages; $p2++): ?>
                     <li class="page-item <?= $p2 === $page ? 'active' : '' ?>">
                         <a class="page-link bg-slate-700 border-secondary text-light"
-                           href="<?= $appUrl ?>/pagos?page=<?= $p2 ?>&q=<?= urlencode($search) ?>">
+                           href="<?= $appUrl ?>/pagos?page=<?= $p2 ?>&q=<?= urlencode($search) ?>&desde=<?= urlencode($desde ?? '') ?>&hasta=<?= urlencode($hasta ?? '') ?>">
                             <?= $p2 ?>
                         </a>
                     </li>

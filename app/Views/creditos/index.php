@@ -5,11 +5,17 @@ ob_start();
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="h3 mb-0 text-white fw-bold"><i class="bi bi-cash-stack me-2 text-success"></i>Créditos</h2>
+    <div class="d-flex gap-2 flex-wrap justify-content-end">
+        <a href="<?= $appUrl ?>/reportes/exportar/creditos?format=pdf&q=<?= urlencode($search ?? '') ?>&estado=<?= urlencode($estado ?? '') ?>"
+           class="btn btn-outline-danger">
+            <i class="bi bi-file-pdf me-1"></i> Exportar PDF
+        </a>
     <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
         <a href="<?= $appUrl ?>/creditos/nuevo" class="btn btn-success">
             <i class="bi bi-plus-lg me-1"></i> Nuevo Crédito
         </a>
     <?php endif; ?>
+    </div>
 </div>
 
 <?php if (isset($_SESSION['flash_success'])): ?>

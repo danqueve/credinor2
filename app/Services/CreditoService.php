@@ -136,6 +136,113 @@ class CreditoService
     }
 
     /**
+     * Edita un credito. Si ya tiene pagos, solo permite datos operativos para
+     * preservar cuotas, saldos e historial contable.
+     *
+     * @param array<string, mixed> $data
+     * @return array{ok: bool, message: string, id_credito?: int, errors?: string[]}
+     */
+    public function editar(int $idCredito, array $data, int $usuarioId): array
+    {
+        $creditoActual = $this->repo->findById($idCredito);
+        if (!$creditoActual) {
+            return ['ok' => false, 'message' => 'Credito no encontrado.'];
+        }
+        if ($creditoActual->estado !== 'activo') {
+            return ['ok' => false, 'message' => 'Solo se pueden editar creditos activos.'];
+        }
+
+        $tienePagos = $this->repo->hasPagos($idCredito);
+        $errors = [];
+
+        $capital        = (float)($data['capital']        ?? $creditoActual->capital);
+        $cantidadCuotas = (int)($data['cantidad_cuotas']  ?? $creditoActual->cantidad_cuotas);
+        $valorCuota     = (float)($data['valor_cuota']    ?? $creditoActual->valor_cuota);
+        $frecuencia     = trim((string)($data['frecuencia'] ?? $creditoActual->frecuencia));
+        $fechaInicio    = trim((string)($data['fecha_inicio'] ?? $creditoActual->fecha_inicio));
+        $gastosAdmin    = max(0.0, (float)($data['gastos_admin'] ?? $creditoActual->gastos_admin));
+
+        if (!$tienePagos) {
+            if ($capital <= 0)        $errors[] = 'El capital debe ser mayor a cero.';
+            if ($cantidadCuotas < 1)  $errors[] = 'La cantidad de cuotas debe ser al menos 1.';
+            if ($valorCuota <= 0)     $errors[] = 'El valor de cuota debe ser mayor a cero.';
+            if (!in_array($frecuencia, ['diaria', 'semanal', 'quincenal', 'mensual'], true)) {
+                $errors[] = 'Frecuencia invalida.';
+            }
+
+            $fechaDt = \DateTime::createFromFormat('Y-m-d', $fechaInicio);
+            if (!$fechaDt || $fechaDt->format('Y-m-d') !== $fechaInicio) {
+                $errors[] = 'Fecha de inicio invalida (formato esperado: YYYY-MM-DD).';
+            }
+        }
+
+        if (!empty($errors)) {
+            return ['ok' => false, 'message' => implode(' ', $errors), 'errors' => $errors];
+        }
+
+        $credito = clone $creditoActual;
+        $credito->id_vendedor      = !empty($data['id_vendedor']) ? (int)$data['id_vendedor'] : null;
+        $credito->id_cobrador      = !empty($data['id_cobrador']) ? (int)$data['id_cobrador'] : null;
+        $credito->destino_opcional = !empty($data['destino_opcional']) ? trim((string)$data['destino_opcional']) : null;
+        $credito->observaciones    = !empty($data['observaciones']) ? trim((string)$data['observaciones']) : null;
+        $credito->updated_by       = $usuarioId;
+
+        $cuotas = [];
+        if (!$tienePagos) {
+            $calculos = $this->calcularPreview($capital, $cantidadCuotas, $valorCuota, $gastosAdmin);
+            $cuotas   = $this->calendario->generar($fechaInicio, $cantidadCuotas, $frecuencia, $valorCuota);
+            $fechaFin = !empty($cuotas) ? end($cuotas)['fecha_vencimiento'] : null;
+
+            $credito->capital               = $capital;
+            $credito->cantidad_cuotas       = $cantidadCuotas;
+            $credito->valor_cuota           = $valorCuota;
+            $credito->monto_total           = $calculos['monto_total'];
+            $credito->interes_implicito     = $calculos['interes_implicito'];
+            $credito->interes_implicito_pct = $calculos['interes_implicito_pct'];
+            $credito->gastos_admin          = $gastosAdmin;
+            $credito->frecuencia            = $frecuencia;
+            $credito->fecha_inicio          = $fechaInicio;
+            $credito->fecha_fin_estimada    = $fechaFin;
+            $credito->saldo_pendiente       = $calculos['monto_total'];
+        }
+
+        $db = Database::getInstance();
+        $db->beginTransaction();
+        try {
+            $this->repo->updateEditable($credito, !$tienePagos);
+            if (!$tienePagos) {
+                $this->repo->replaceCuotasSinPagos($idCredito, $cuotas);
+            }
+
+            Audit::log('credito.update', 'creditos', $idCredito, [
+                'capital' => $creditoActual->capital,
+                'cantidad_cuotas' => $creditoActual->cantidad_cuotas,
+                'valor_cuota' => $creditoActual->valor_cuota,
+                'id_cobrador' => $creditoActual->id_cobrador,
+            ], [
+                'capital' => $credito->capital,
+                'cantidad_cuotas' => $credito->cantidad_cuotas,
+                'valor_cuota' => $credito->valor_cuota,
+                'id_cobrador' => $credito->id_cobrador,
+                'solo_operativo' => $tienePagos,
+            ]);
+
+            $db->commit();
+        } catch (\Throwable $e) {
+            $db->rollBack();
+            return ['ok' => false, 'message' => 'Error interno al editar el credito. Intente de nuevo.'];
+        }
+
+        return [
+            'ok' => true,
+            'message' => $tienePagos
+                ? 'Credito actualizado. Como tiene pagos, solo se modificaron datos operativos.'
+                : 'Credito actualizado y calendario recalculado.',
+            'id_credito' => $idCredito,
+        ];
+    }
+
+    /**
      * Refinancia un crédito activo: cierra el original y genera uno nuevo con el saldo como capital.
      *
      * @param array<string, mixed> $data [cantidad_cuotas, valor_cuota, frecuencia, fecha_inicio, id_cobrador?, id_vendedor?, gastos_admin?]

@@ -448,6 +448,108 @@ class ReporteRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function exportClientes(string $search = ''): array
+    {
+        $sql = "
+            SELECT
+                c.nombre, c.dni, c.telefono, c.direccion,
+                z.nombre AS zona_nombre,
+                COUNT(DISTINCT cr.id_credito) AS creditos_activos,
+                COALESCE(SUM(cr.saldo_pendiente), 0) AS saldo_total,
+                MIN(CASE
+                    WHEN cu.estado IN ('pendiente','parcial','vencida') THEN cu.fecha_vencimiento
+                    ELSE NULL
+                END) AS proxima_cuota
+            FROM clientes c
+            LEFT JOIN zonas z ON c.id_zona = z.id_zona
+            LEFT JOIN creditos cr ON cr.id_cliente = c.id_cliente
+                AND cr.estado = 'activo'
+                AND cr.deleted_at IS NULL
+            LEFT JOIN cuotas cu ON cu.id_credito = cr.id_credito
+            WHERE c.deleted_at IS NULL
+        ";
+        $params = [];
+        if ($search !== '') {
+            $sql .= " AND (c.nombre LIKE ? OR c.dni LIKE ? OR c.telefono LIKE ?)";
+            $like = "%{$search}%";
+            $params = [$like, $like, $like];
+        }
+        $sql .= " GROUP BY c.id_cliente ORDER BY c.nombre ASC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function exportCreditos(string $search = '', string $estado = ''): array
+    {
+        $sql = "
+            SELECT
+                cr.codigo, cr.estado, cr.capital, cr.monto_total, cr.saldo_pendiente,
+                cr.frecuencia, cr.fecha_inicio,
+                cl.nombre AS cliente_nombre, cl.dni AS cliente_dni,
+                pc.nombre AS cobrador_nombre
+            FROM creditos cr
+            JOIN clientes cl ON cr.id_cliente = cl.id_cliente
+            LEFT JOIN personal pc ON cr.id_cobrador = pc.id_personal
+            WHERE cr.deleted_at IS NULL
+        ";
+        $params = [];
+        if ($search !== '') {
+            $sql .= " AND (cl.nombre LIKE ? OR cl.dni LIKE ? OR cr.codigo LIKE ?)";
+            $like = "%{$search}%";
+            $params[] = $like;
+            $params[] = $like;
+            $params[] = $like;
+        }
+        if ($estado !== '') {
+            $sql .= " AND cr.estado = ?";
+            $params[] = $estado;
+        }
+        $sql .= " ORDER BY cr.id_credito DESC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function exportCobros(string $search = '', string $desde = '', string $hasta = ''): array
+    {
+        $sql = "
+            SELECT
+                p.id_pago, p.fecha_pago_real, p.monto_pagado, p.forma_pago, p.anulado,
+                cl.nombre AS cliente_nombre, cl.dni AS cliente_dni,
+                cr.codigo AS credito_codigo,
+                pc.nombre AS cobrador_nombre
+            FROM pagos p
+            JOIN creditos cr ON p.id_credito = cr.id_credito
+            JOIN clientes cl ON cr.id_cliente = cl.id_cliente
+            LEFT JOIN personal pc ON p.id_cobrador = pc.id_personal
+            WHERE p.deleted_at IS NULL
+        ";
+        $params = [];
+        if ($search !== '') {
+            $sql .= " AND (cl.nombre LIKE ? OR cl.dni LIKE ? OR cr.codigo LIKE ?)";
+            $like = "%{$search}%";
+            $params[] = $like;
+            $params[] = $like;
+            $params[] = $like;
+        }
+        if ($desde !== '') {
+            $sql .= " AND p.fecha_pago_real >= ?";
+            $params[] = $desde;
+        }
+        if ($hasta !== '') {
+            $sql .= " AND p.fecha_pago_real <= ?";
+            $params[] = $hasta;
+        }
+        $sql .= " ORDER BY p.fecha_pago_real DESC, p.id_pago DESC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     /**
      * Calcula comisiones sugeridas basadas en capital prestado (ventas)
      * y monto cobrado (cobranza) en un periodo.

@@ -250,4 +250,143 @@ class ReporteService
         $mpdf->Output('cobranza_' . $desde . '_' . $hasta . '.pdf', 'D');
         exit;
     }
+
+    public function exportClientesPdf(string $search = ''): void
+    {
+        $data = $this->repo->exportClientes($search);
+        $filas = '';
+        $totalSaldo = 0.0;
+
+        foreach ($data as $item) {
+            $saldo = (float)$item['saldo_total'];
+            $totalSaldo += $saldo;
+            $filas .= '<tr>
+                <td>' . htmlspecialchars($item['nombre'] ?? '') . '</td>
+                <td>' . htmlspecialchars($item['dni'] ?? '') . '</td>
+                <td>' . htmlspecialchars($item['telefono'] ?? '-') . '</td>
+                <td>' . htmlspecialchars($item['zona_nombre'] ?? '-') . '</td>
+                <td align="center">' . (int)$item['creditos_activos'] . '</td>
+                <td align="right">$ ' . number_format($saldo, 2, ',', '.') . '</td>
+                <td>' . (!empty($item['proxima_cuota']) ? date('d/m/Y', strtotime($item['proxima_cuota'])) : '-') . '</td>
+            </tr>';
+        }
+
+        $html = $this->pdfHeader('Clientes', $search !== '' ? 'Filtro: ' . $search : 'Todos los clientes') . '
+            <table border="1" width="100%" cellpadding="6" style="border-collapse:collapse;font-size:10px;">
+                <thead><tr style="background:#f2f2f2;">
+                    <th>Cliente</th><th>DNI</th><th>Telefono</th><th>Zona</th>
+                    <th>Creditos</th><th>Saldo</th><th>Prox. cuota</th>
+                </tr></thead>
+                <tbody>' . $filas . '</tbody>
+                <tfoot><tr style="font-weight:bold;">
+                    <td colspan="5" align="right">TOTAL SALDO:</td>
+                    <td align="right">$ ' . number_format($totalSaldo, 2, ',', '.') . '</td>
+                    <td></td>
+                </tr></tfoot>
+            </table>';
+
+        $this->downloadPdf($html, 'clientes_' . date('Y-m-d') . '.pdf');
+    }
+
+    public function exportCreditosPdf(string $search = '', string $estado = ''): void
+    {
+        $data = $this->repo->exportCreditos($search, $estado);
+        $filas = '';
+        $totalCapital = 0.0;
+        $totalSaldo = 0.0;
+
+        foreach ($data as $item) {
+            $capital = (float)$item['capital'];
+            $saldo = (float)$item['saldo_pendiente'];
+            $totalCapital += $capital;
+            $totalSaldo += $saldo;
+            $filas .= '<tr>
+                <td>' . htmlspecialchars($item['codigo']) . '</td>
+                <td>' . htmlspecialchars($item['cliente_nombre']) . '<br><small>DNI ' . htmlspecialchars($item['cliente_dni']) . '</small></td>
+                <td align="right">$ ' . number_format($capital, 2, ',', '.') . '</td>
+                <td align="right">$ ' . number_format((float)$item['monto_total'], 2, ',', '.') . '</td>
+                <td align="right">$ ' . number_format($saldo, 2, ',', '.') . '</td>
+                <td>' . htmlspecialchars(ucfirst((string)$item['estado'])) . '</td>
+                <td>' . htmlspecialchars($item['cobrador_nombre'] ?? '-') . '</td>
+                <td>' . date('d/m/Y', strtotime($item['fecha_inicio'])) . '</td>
+            </tr>';
+        }
+
+        $sub = trim(($search !== '' ? 'Filtro: ' . $search . ' ' : '') . ($estado !== '' ? 'Estado: ' . $estado : ''));
+        $html = $this->pdfHeader('Creditos', $sub !== '' ? $sub : 'Todos los creditos') . '
+            <table border="1" width="100%" cellpadding="6" style="border-collapse:collapse;font-size:9px;">
+                <thead><tr style="background:#f2f2f2;">
+                    <th>Codigo</th><th>Cliente</th><th>Capital</th><th>Total</th>
+                    <th>Saldo</th><th>Estado</th><th>Cobrador</th><th>Inicio</th>
+                </tr></thead>
+                <tbody>' . $filas . '</tbody>
+                <tfoot><tr style="font-weight:bold;">
+                    <td colspan="2" align="right">TOTALES:</td>
+                    <td align="right">$ ' . number_format($totalCapital, 2, ',', '.') . '</td>
+                    <td></td>
+                    <td align="right">$ ' . number_format($totalSaldo, 2, ',', '.') . '</td>
+                    <td colspan="3"></td>
+                </tr></tfoot>
+            </table>';
+
+        $this->downloadPdf($html, 'creditos_' . date('Y-m-d') . '.pdf');
+    }
+
+    public function exportCobrosPdf(string $search = '', string $desde = '', string $hasta = ''): void
+    {
+        $data = $this->repo->exportCobros($search, $desde, $hasta);
+        $filas = '';
+        $total = 0.0;
+
+        foreach ($data as $item) {
+            $monto = (float)$item['monto_pagado'];
+            if (!(bool)$item['anulado']) {
+                $total += $monto;
+            }
+            $filas .= '<tr>
+                <td>' . date('d/m/Y', strtotime($item['fecha_pago_real'])) . '</td>
+                <td>' . htmlspecialchars($item['cliente_nombre']) . '<br><small>DNI ' . htmlspecialchars($item['cliente_dni']) . '</small></td>
+                <td>' . htmlspecialchars($item['credito_codigo']) . '</td>
+                <td align="right">$ ' . number_format($monto, 2, ',', '.') . '</td>
+                <td>' . htmlspecialchars(ucfirst(str_replace('_', ' ', (string)$item['forma_pago']))) . '</td>
+                <td>' . htmlspecialchars($item['cobrador_nombre'] ?? '-') . '</td>
+                <td>' . ((bool)$item['anulado'] ? 'Anulado' : 'Vigente') . '</td>
+            </tr>';
+        }
+
+        $periodo = ($desde !== '' || $hasta !== '')
+            ? 'Periodo: ' . ($desde !== '' ? date('d/m/Y', strtotime($desde)) : 'inicio') . ' al ' . ($hasta !== '' ? date('d/m/Y', strtotime($hasta)) : 'hoy')
+            : 'Todos los cobros';
+        $sub = trim($periodo . ($search !== '' ? ' - Filtro: ' . $search : ''));
+        $html = $this->pdfHeader('Cobros', $sub) . '
+            <table border="1" width="100%" cellpadding="6" style="border-collapse:collapse;font-size:9px;">
+                <thead><tr style="background:#f2f2f2;">
+                    <th>Fecha</th><th>Cliente</th><th>Credito</th><th>Monto</th>
+                    <th>Forma</th><th>Cobrador</th><th>Estado</th>
+                </tr></thead>
+                <tbody>' . $filas . '</tbody>
+                <tfoot><tr style="font-weight:bold;">
+                    <td colspan="3" align="right">TOTAL VIGENTE:</td>
+                    <td align="right">$ ' . number_format($total, 2, ',', '.') . '</td>
+                    <td colspan="3"></td>
+                </tr></tfoot>
+            </table>';
+
+        $this->downloadPdf($html, 'cobros_' . date('Y-m-d') . '.pdf');
+    }
+
+    private function pdfHeader(string $titulo, string $subtitulo): string
+    {
+        return '<h2 style="text-align:center;margin-bottom:4px;">' . htmlspecialchars($titulo) . '</h2>
+            <p style="text-align:center;margin-top:0;">' . htmlspecialchars($subtitulo) . '</p>
+            <p style="text-align:center;font-size:10px;color:#666;">Generado: ' . date('d/m/Y H:i') . '</p>';
+    }
+
+    private function downloadPdf(string $html, string $filename): void
+    {
+        $mpdf = new \Mpdf\Mpdf(['format' => 'A4-L']);
+        $mpdf->WriteHTML($html);
+        $mpdf->Output($filename, 'D');
+        exit;
+    }
 }

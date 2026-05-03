@@ -73,4 +73,28 @@ class ReporteController
             $this->service->exportAtrasoExcel();
         }
     }
+
+    public function exportClientes(): void
+    {
+        Auth::requireAdminReadOnly();
+        $search = Sanitizer::clean($_GET['q'] ?? '');
+        $this->service->exportClientesPdf($search);
+    }
+
+    public function exportCreditos(): void
+    {
+        Auth::requireAdminReadOnly();
+        $search = Sanitizer::clean($_GET['q'] ?? '');
+        $estado = Sanitizer::clean($_GET['estado'] ?? '');
+        $this->service->exportCreditosPdf($search, $estado);
+    }
+
+    public function exportCobros(): void
+    {
+        Auth::requireAdminReadOnly();
+        $search = Sanitizer::clean($_GET['q'] ?? '');
+        $desde  = Sanitizer::clean($_GET['desde'] ?? '');
+        $hasta  = Sanitizer::clean($_GET['hasta'] ?? '');
+        $this->service->exportCobrosPdf($search, $desde, $hasta);
+    }
 }
