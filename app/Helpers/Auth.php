@@ -83,7 +83,8 @@ class Auth
 
         return [
             'id'          => Session::get('usuario_id'),
-            'username'    => Session::get('usuario_nombre'),
+            'username'    => Session::get('usuario_username') ?? Session::get('usuario_nombre'),
+            'nombre'      => Session::get('usuario_nombre'),
             'rol'         => Session::get('usuario_rol'),
             'id_personal' => Session::get('usuario_personal_id'),
             'id_cliente'  => Session::get('usuario_cliente_id'),

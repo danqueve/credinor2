@@ -55,7 +55,7 @@ class AuthService
             // Guardar datos temporales en sesión para el segundo paso
             Session::regenerate(true);
             Session::set('totp_pending_id',       $user->id_usuario);
-            Session::set('totp_pending_nombre',   $user->username);
+            Session::set('totp_pending_nombre',   trim(($user->nombre ?? '') . ' ' . ($user->apellido ?? '')));
             Session::set('totp_pending_rol',      $user->rol);
             Session::set('totp_pending_personal', $user->id_personal);
             return ['ok' => true, 'totp_required' => true, 'message' => '2FA requerido.'];
@@ -65,7 +65,8 @@ class AuthService
 
         Session::regenerate(true);
         Session::set('usuario_id',          $user->id_usuario);
-        Session::set('usuario_nombre',      $user->username);
+        Session::set('usuario_username',    $user->username);
+        Session::set('usuario_nombre',      trim(($user->nombre ?? '') . ' ' . ($user->apellido ?? '')));
         Session::set('usuario_rol',         $user->rol);
         Session::set('usuario_personal_id', $user->id_personal);
         Session::set('usuario_cliente_id',  $user->id_cliente);

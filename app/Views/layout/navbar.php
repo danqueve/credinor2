@@ -33,9 +33,9 @@
                 <a class="nav-link dropdown-toggle text-light d-flex align-items-center gap-2" href="#"
                    id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <div class="user-avatar">
-                        <?= strtoupper(substr($user['username'], 0, 1)) ?>
+                        <?= strtoupper(substr($user['nombre'] ?? $user['username'], 0, 1)) ?>
                     </div>
-                    <span class="d-none d-md-inline"><?= htmlspecialchars($user['username']) ?></span>
+                    <span class="d-none d-md-inline"><?= htmlspecialchars($user['nombre'] ?? $user['username']) ?></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark bg-slate-800 border-secondary" aria-labelledby="navbarDropdown">
                     <li><h6 class="dropdown-header">Rol: <?= ucfirst($user['rol']) ?></h6></li>

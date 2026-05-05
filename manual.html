@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual de Usuario — Credinor</title>
+<style>
+  /* ── Variables ── */
+  :root {
+    --navy:   #1e3a5f;
+    --navy2:  #162d4a;
+    --blue:   #2563eb;
+    --green:  #16a34a;
+    --yellow: #d97706;
+    --red:    #dc2626;
+    --gray:   #6b7280;
+    --light:  #f8fafc;
+    --border: #e2e8f0;
+  }
+
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #1e293b;
+    background: #f1f5f9;
+  }
+
+  /* ── Layout ── */
+  .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+
+  /* ── Portada ── */
+  .cover {
+    background: linear-gradient(135deg, var(--navy2) 0%, var(--navy) 60%, #2563eb 100%);
+    color: #fff;
+    padding: 80px 40px;
+    border-radius: 12px;
+    margin-bottom: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+  .cover-logo {
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+  .cover-sub {
+    font-size: 14px;
+    color: #93c5fd;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+  .cover h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    line-height: 1.2;
+  }
+  .cover p { font-size: 15px; color: #bfdbfe; max-width: 500px; }
+  .cover-meta {
+    margin-top: 40px;
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .cover-meta span {
+    font-size: 12px;
+    color: #93c5fd;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .cover-meta strong { display: block; color: #fff; font-size: 14px; margin-top: 2px; }
+
+  /* ── Índice ── */
+  .toc {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px 32px;
+    margin-bottom: 40px;
+  }
+  .toc h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--navy);
+  }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin: 6px 0; }
+  .toc a { color: var(--blue); text-decoration: none; font-size: 13.5px; }
+  .toc a:hover { text-decoration: underline; }
+  .toc .sub { list-style: disc; margin-top: 4px; padding-left: 18px; }
+  .toc .sub li { margin: 3px 0; }
+
+  /* ── Secciones ── */
+  .section {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 32px;
+    overflow: hidden;
+  }
+  .section-header {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .section-icon {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .icon-admin  { background: #dbeafe; }
+  .icon-super  { background: #d1fae5; }
+  .icon-cobrador { background: #fef3c7; }
+  .icon-gen    { background: #f1f5f9; }
+  .section-header h2 { font-size: 20px; font-weight: 700; color: var(--navy); }
+  .section-header p  { font-size: 13px; color: var(--gray); margin-top: 2px; }
+  .section-body { padding: 24px 28px; }
+
+  /* ── Subsecciones ── */
+  h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 24px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3:first-child { margin-top: 0; }
+  h4 { font-size: 13.5px; font-weight: 600; color: #374151; margin: 14px 0 6px; }
+  p  { margin-bottom: 10px; font-size: 13.5px; }
+
+  /* ── Badge de rol ── */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .badge-admin    { background: #dbeafe; color: #1e40af; }
+  .badge-super    { background: #d1fae5; color: #065f46; }
+  .badge-cobrador { background: #fef3c7; color: #92400e; }
+
+  /* ── Feature cards ── */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 12px 0 20px;
+  }
+  .feature-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    background: var(--light);
+  }
+  .feature-card .fc-icon { font-size: 20px; margin-bottom: 6px; display: block; }
+  .feature-card .fc-title { font-weight: 600; font-size: 13px; color: #1e293b; margin-bottom: 4px; }
+  .feature-card .fc-desc  { font-size: 12px; color: var(--gray); line-height: 1.5; }
+
+  /* ── Listas de funciones ── */
+  .func-list { list-style: none; margin: 8px 0 16px; }
+  .func-list li {
+    padding: 7px 10px 7px 32px;
+    position: relative;
+    font-size: 13px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .func-list li:last-child { border-bottom: none; }
+  .func-list li::before {
+    content: '✓';
+    position: absolute;
+    left: 10px;
+    color: var(--green);
+    font-weight: 700;
+  }
+  .func-list.blocked li::before { content: '✗'; color: var(--red); }
+
+  /* ── Tabla de permisos ── */
+  .perm-table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 12.5px; }
+  .perm-table th {
+    background: var(--navy);
+    color: #fff;
+    padding: 9px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .perm-table th:not(:first-child) { text-align: center; }
+  .perm-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .perm-table tr:nth-child(even) td { background: #f8fafc; }
+  .perm-table td:not(:first-child) { text-align: center; }
+  .perm-table .cat {
+    background: #f1f5f9;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray);
+    padding: 6px 12px;
+  }
+  .ok  { color: var(--green); font-size: 16px; font-weight: 700; }
+  .no  { color: #d1d5db;      font-size: 16px; }
+  .ro  { color: var(--yellow); font-size: 11px; font-weight: 600; }
+
+  /* ── Steps ── */
+  .steps { counter-reset: step; margin: 10px 0 20px; }
+  .step {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+    align-items: flex-start;
+  }
+  .step-num {
+    counter-increment: step;
+    min-width: 28px; height: 28px;
+    background: var(--navy);
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .step-body { padding-top: 4px; font-size: 13px; }
+  .step-body strong { display: block; font-weight: 600; margin-bottom: 2px; }
+
+  /* ── Alert box ── */
+  .alert {
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 13px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .alert-info    { background: #eff6ff; border-left: 4px solid #2563eb; color: #1e40af; }
+  .alert-warning { background: #fffbeb; border-left: 4px solid #d97706; color: #92400e; }
+  .alert-success { background: #f0fdf4; border-left: 4px solid #16a34a; color: #065f46; }
+  .alert-icon { font-size: 16px; flex-shrink: 0; }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+  /* ── URL chip ── */
+  .url {
+    display: inline-block;
+    background: #f1f5f9;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--blue);
+  }
+
+  /* ── Footer ── */
+  .manual-footer {
+    text-align: center;
+    color: var(--gray);
+    font-size: 12px;
+    padding: 24px 0;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+
+  /* ── Print ── */
+  @media print {
+    body { background: #fff; font-size: 12px; }
+    .container { padding: 0; max-width: 100%; }
+    .cover {
+      border-radius: 0;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+      page-break-after: always;
+    }
+    .toc { page-break-after: always; }
+    .section { border: 1px solid #ccc; page-break-inside: avoid; margin-bottom: 20px; }
+    .section-header { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .perm-table th { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .no-print { display: none; }
+    a { color: inherit; text-decoration: none; }
+    h3 { page-break-after: avoid; }
+  }
+
+  /* ── Export button ── */
+  .export-btn {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(30,58,95,0.35);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 999;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .export-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(30,58,95,0.45);
+  }
+</style>
+</head>
+<body>
+
+<button class="export-btn no-print" onclick="window.print()">
+  ⬇ Exportar PDF
+</button>
+
+<div class="container">
+
+  <!-- PORTADA -->
+  <div class="cover">
+    <div class="cover-logo">CREDINOR</div>
+    <div class="cover-sub">Sistema de Gestión de Créditos</div>
+    <h1>Manual de Usuario</h1>
+    <p>Guía completa de uso del sistema para los perfiles Administrador, Supervisor y Cobrador.</p>
+    <div class="cover-meta">
+      <div><span>Versión</span><strong>1.0</strong></div>
+      <div><span>Fecha</span><strong>Mayo 2026</strong></div>
+      <div><span>Plataforma</span><strong>credinor.credinort.uno</strong></div>
+    </div>
+  </div>
+
+  <!-- ÍNDICE -->
+  <div class="toc">
+    <h2>Índice de Contenidos</h2>
+    <ol>
+      <li><a href="#intro">Introducción al Sistema</a></li>
+      <li>
+        <a href="#login">Acceso y Login</a>
+      </li>
+      <li>
+        <a href="#admin">Perfil: Administrador</a>
+        <ul class="sub">
+          <li><a href="#admin-dashboard">Dashboard</a></li>
+          <li><a href="#admin-clientes">Gestión de Clientes</a></li>
+          <li><a href="#admin-creditos">Gestión de Créditos</a></li>
+          <li><a href="#admin-pagos">Pagos y Rendiciones</a></li>
+          <li><a href="#admin-caja">Caja</a></li>
+          <li><a href="#admin-reportes">Reportes</a></li>
+          <li><a href="#admin-personal">Personal, Zonas y Usuarios</a></li>
+        </ul>
+      </li>
+      <li>
+        <a href="#supervisor">Perfil: Supervisor</a>
+        <ul class="sub">
+          <li><a href="#super-dashboard">Dashboard y Consultas</a></li>
+          <li><a href="#super-reportes">Reportes y Exportaciones</a></li>
+          <li><a href="#super-limites">Limitaciones del perfil</a></li>
+        </ul>
+      </li>
+      <li>
+        <a href="#cobrador">Perfil: Cobrador</a>
+        <ul class="sub">
+          <li><a href="#cobrador-dia">Mi Día de Cobranza</a></li>
+          <li><a href="#cobrador-cartera">Mi Cartera</a></li>
+          <li><a href="#cobrador-visita">Registrar Visita</a></li>
+        </ul>
+      </li>
+      <li><a href="#permisos">Matriz de Permisos</a></li>
+    </ol>
+  </div>
+
+  <!-- 1. INTRODUCCIÓN -->
+  <div class="section" id="intro">
+    <div class="section-header">
+      <div class="section-icon icon-gen">📋</div>
+      <div>
+        <h2>1. Introducción al Sistema</h2>
+        <p>Descripción general de Credinor</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <p><strong>Credinor</strong> es un sistema web de gestión de créditos y cobranzas diseñado para empresas de préstamos personales. Permite administrar clientes, créditos, pagos, rendiciones de cobradores, caja y reportes financieros desde cualquier dispositivo con conexión a internet.</p>
+
+      <h3>Perfiles del sistema</h3>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="fc-icon">👑</span>
+          <div class="fc-title">Administrador</div>
+          <div class="fc-desc">Acceso total. Gestiona todo el sistema, crea créditos, registra pagos y administra usuarios.</div>
+        </div>
+        <div class="feature-card">
+          <span class="fc-icon">🔍</span>
+          <div class="fc-title">Supervisor</div>
+          <div class="fc-desc">Lectura completa. Puede ver y exportar toda la información pero no puede crear ni modificar datos.</div>
+        </div>
+        <div class="feature-card">
+          <span class="fc-icon">📱</span>
+          <div class="fc-title">Cobrador</div>
+          <div class="fc-desc">Acceso mobile. Ve su cartera asignada y puede registrar visitas de cobranza en campo.</div>
+        </div>
+      </div>
+
+      <h3>Acceso al sistema</h3>
+      <p>El sistema está disponible en: <span class="url">https://credinor.credinort.uno</span></p>
+      <p>Es compatible con cualquier navegador moderno (Chrome, Firefox, Edge, Safari) y funciona tanto en computadoras como en celulares.</p>
+    </div>
+  </div>
+
+  <!-- 2. LOGIN -->
+  <div class="section" id="login">
+    <div class="section-header">
+      <div class="section-icon icon-gen">🔐</div>
+      <div>
+        <h2>2. Acceso y Login</h2>
+        <p>Cómo ingresar al sistema</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Ingresar a la URL</strong>
+            Abrí el navegador y entrá a <span class="url">https://credinor.credinort.uno</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Completar credenciales</strong>
+            Ingresá tu <strong>usuario</strong> y <strong>contraseña</strong> proporcionados por el administrador.
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>Redirección automática</strong>
+            El sistema te redirige según tu perfil:
+            Admin/Supervisor → Dashboard · Cobrador → Mi Día de Cobranza
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-warning">
+        <span class="alert-icon">⚠️</span>
+        <span>Si ingresás mal la contraseña 5 veces seguidas, tu cuenta se bloqueará temporalmente por 15 minutos por seguridad.</span>
+      </div>
+
+      <h3>Cierre de sesión</h3>
+      <p>Para cerrar sesión hacé clic en tu nombre en la esquina superior derecha y seleccioná <strong>Cerrar sesión</strong>. La sesión también se cierra automáticamente tras 30 minutos de inactividad.</p>
+    </div>
+  </div>
+
+  <!-- 3. ADMIN -->
+  <div class="section" id="admin">
+    <div class="section-header">
+      <div class="section-icon icon-admin">👑</div>
+      <div>
+        <h2>3. Perfil: Administrador</h2>
+        <p>Acceso completo a todas las funciones del sistema</p>
+      </div>
+    </div>
+    <div class="section-body">
+
+      <div class="alert alert-info">
+        <span class="alert-icon">ℹ️</span>
+        <span>El Administrador es el único perfil que puede crear, editar y eliminar datos. Tiene acceso a todas las secciones del sistema sin restricciones.</span>
+      </div>
+
+      <!-- Dashboard -->
+      <h3 id="admin-dashboard">3.1 Dashboard</h3>
+      <p>Al ingresar, el Administrador ve el panel principal con los indicadores más importantes del negocio en tiempo real:</p>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="fc-icon">💰</span>
+          <div class="fc-title">Saldo de Caja</div>
+          <div class="fc-desc">Total cobrado menos total prestado más movimientos manuales.</div>
+        </div>
+        <div class="feature-card">
+          <span class="fc-icon">📊</span>
+          <div class="fc-title">Capital Activo</div>
+          <div class="fc-desc">Suma del saldo pendiente de todos los créditos activos.</div>
+        </div>
+        <div class="feature-card">
+          <span class="fc-icon">📈</span>
+          <div class="fc-title">Cobrado Histórico</div>
+          <div class="fc-desc">Total acumulado de todos los pagos registrados.</div>
+        </div>
+        <div class="feature-card">
+          <span class="fc-icon">⏳</span>
+          <div class="fc-title">Pendientes de Cobro</div>
+          <div class="fc-desc">Monto total de cuotas aún no pagadas.</div>
+        </div>
+      </div>
+      <p>También muestra el <strong>historial de movimientos</strong> del período seleccionado (cobros, préstamos y movimientos de caja) y puede filtrar por rango de fechas.</p>
+
+      <!-- Clientes -->
+      <h3 id="admin-clientes">3.2 Gestión de Clientes</h3>
+      <p>Acceso desde el menú lateral → <strong>Clientes</strong> o en <span class="url">/clientes</span></p>
+
+      <h4>Listado de clientes</h4>
+      <p>Muestra todos los clientes registrados con nombre, DNI, teléfono, zona asignada y cantidad de créditos activos. Permite buscar por nombre o DNI y exportar a PDF.</p>
+
+      <h4>Nuevo cliente</h4>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body"><strong>Clic en "Nuevo Cliente"</strong> en el menú o en el botón del listado.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body"><strong>Completar datos:</strong> Nombre, Apellido, DNI, Teléfono, Dirección y Zona. Los campos marcados con * son obligatorios.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body"><strong>Guardar.</strong> El cliente queda registrado y se puede crear un crédito de inmediato.</div>
+        </div>
+      </div>
+
+      <h4>Ficha del cliente</h4>
+      <p>Muestra el detalle completo: datos personales, créditos activos e histórico, y opciones para editar o crear un nuevo crédito para ese cliente.</p>
+
+      <!-- Créditos -->
+      <h3 id="admin-creditos">3.3 Gestión de Créditos</h3>
+      <p>Acceso desde el menú lateral → <strong>Créditos</strong> o en <span class="url">/creditos</span></p>
+
+      <h4>Crear un crédito nuevo</h4>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body"><strong>Buscar el cliente:</strong> Escribí nombre o DNI en el buscador. El sistema muestra resultados en tiempo real.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body"><strong>Completar datos financieros:</strong> Capital prestado, Cantidad de cuotas, Valor de cuota y Frecuencia (diaria, semanal, quincenal, mensual).</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body"><strong>Verificar el resumen:</strong> El sistema calcula automáticamente el Monto total y el Interés implícito. Si el valor de cuota supera el capital, aparece una alerta de advertencia.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body"><strong>Asignar cobrador y vendedor</strong> (opcional) y confirmar la creación.</div>
+        </div>
+      </div>
+
+      <div class="alert alert-warning">
+        <span class="alert-icon">⚠️</span>
+        <span><strong>Importante:</strong> El "Valor de cuota" es el monto que el cliente paga en cada cuota, NO el capital total. Por ejemplo, para un préstamo de $68.000 en 10 cuotas con tasa del 20%, el valor de cuota sería aproximadamente $8.160.</span>
+      </div>
+
+      <h4>Acciones sobre un crédito</h4>
+      <ul class="func-list">
+        <li>Ver ficha completa con calendario de cuotas</li>
+        <li>Editar datos (capital, cuotas, cobrador)</li>
+        <li>Registrar un pago desde la ficha</li>
+        <li>Refinanciar: convierte el saldo pendiente en un nuevo crédito</li>
+        <li>Marcar como incobrable: registra la pérdida sin borrar el historial</li>
+        <li>Anular: cancela el crédito (solo si no tiene pagos)</li>
+      </ul>
+
+      <h4>Estados de un crédito</h4>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="fc-icon">🟢</span>
+          <div class="fc-title">Activo</div>
+          <div class="fc-desc">Con cuotas pendientes de pago.</div>
+        </div>
+        <div class="feature-card">
+          <span class="fc-icon">✅</span>
+          <div class="fc-title">Cancelado</div>
+          <div class="fc-desc">Todas las cuotas pagadas.</div>
+        </div>
+        <div class="feature-card">
+          <span class="fc-icon">🔄</span>
+          <div class="fc-title">Refinanciado</div>
+          <div class="fc-desc">Se generó un nuevo crédito con el saldo.</div>
+        </div>
+        <div class="feature-card">
+          <span class="fc-icon">🔴</span>
+          <div class="fc-title">Incobrable</div>
+          <div class="fc-desc">Marcado como pérdida.</div>
+        </div>
+        <div class="feature-card">
+          <span class="fc-icon">⛔</span>
+          <div class="fc-title">Anulado</div>
+          <div class="fc-desc">Cancelado sin pagos previos.</div>
+        </div>
+      </div>
+
+      <!-- Pagos -->
+      <h3 id="admin-pagos">3.4 Pagos y Rendiciones</h3>
+
+      <h4>Registrar un pago</h4>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body"><strong>Ir a la ficha del crédito</strong> o a <span class="url">/pagos/nuevo</span>.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body"><strong>Ingresar el monto</strong> y la forma de pago (Efectivo, Transferencia, Mercado Pago).</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body"><strong>El sistema aplica automáticamente</strong> el pago a las cuotas más antiguas primero (método FIFO). Si el monto cubre varias cuotas, las marca como pagadas.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body"><strong>Se genera un recibo en PDF</strong> (formato A5) que se puede descargar o imprimir.</div>
+        </div>
+      </div>
+
+      <h4>Rendiciones</h4>
+      <p>Las rendiciones agrupan los pagos cobrados por cada cobrador en un período. Permiten hacer el control de lo que cada cobrador entregó versus lo que cobró.</p>
+      <ul class="func-list">
+        <li>Ver listado de rendiciones por período</li>
+        <li>Ver ficha detallada con pagos incluidos</li>
+        <li>Detectar diferencias entre cobrado y entregado</li>
+      </ul>
+
+      <!-- Caja -->
+      <h3 id="admin-caja">3.5 Caja</h3>
+      <p>Acceso desde el menú lateral → <strong>Caja</strong> o el botón azul en la barra superior.</p>
+      <p>Registra todos los movimientos de dinero que no son préstamos ni cobros: sueldos, gastos operativos, ingresos extraordinarios.</p>
+
+      <h4>Registrar un movimiento</h4>
+      <ul class="func-list">
+        <li>Tipo: <strong>Ingreso</strong> (dinero que entra) o <strong>Egreso</strong> (dinero que sale)</li>
+        <li>Monto y concepto descriptivo</li>
+        <li>Fecha del movimiento</li>
+      </ul>
+
+      <div class="alert alert-info">
+        <span class="alert-icon">ℹ️</span>
+        <span>El saldo de caja visible en el Dashboard se calcula como: <strong>Total Cobrado − Total Prestado + Ingresos manuales − Egresos manuales</strong>.</span>
+      </div>
+
+      <!-- Reportes -->
+      <h3 id="admin-reportes">3.6 Reportes</h3>
+      <p>Acceso desde el menú lateral → <strong>Reportes</strong>.</p>
+
+      <h4>Métricas disponibles</h4>
+      <ul class="func-list">
+        <li>Total cobrado y prestado en un rango de fechas</li>
+        <li>Saldo actual de caja (histórico)</li>
+        <li>Capital activo en cartera</li>
+        <li>Pendientes de cobro</li>
+        <li>Historial de movimientos con filtro de fechas</li>
+        <li>Clientes con cuotas atrasadas</li>
+        <li>Próximos vencimientos</li>
+      </ul>
+
+      <h4>Exportación a PDF</h4>
+      <p>Desde el encabezado de la página de Reportes, Clientes y Créditos hay botones para exportar a PDF. Los PDFs abren en una nueva pestaña y pueden descargarse o imprimirse desde ahí.</p>
+      <ul class="func-list">
+        <li>PDF de Clientes: listado numerado con zona, créditos activos y saldo</li>
+        <li>PDF de Créditos: listado numerado con capital, total a devolver y saldo pendiente</li>
+        <li>PDF de Cobros: pagos del período filtrado con forma de pago y cobrador</li>
+        <li>PDF de Cobranza: resumen por cobrador con total cobrado</li>
+        <li>PDF de Atraso: clientes con cuotas vencidas y días de atraso</li>
+      </ul>
+
+      <!-- Personal -->
+      <h3 id="admin-personal">3.7 Personal, Zonas y Usuarios</h3>
+
+      <h4>Personal</h4>
+      <p>Gestiona el equipo de cobradores y vendedores. Cada persona puede tener rol de Cobrador, Vendedor o Ambos. Se pueden asignar comisiones y zonas.</p>
+
+      <h4>Zonas</h4>
+      <p>Las zonas agrupan geográficamente los clientes y se asignan a cobradores. Cada cliente pertenece a una zona, y los cobradores solo ven los clientes de su zona asignada.</p>
+
+      <h4>Usuarios del sistema</h4>
+      <p>Gestiona las cuentas de acceso al sistema:</p>
+      <ul class="func-list">
+        <li>Crear usuarios (admin, supervisor, cobrador)</li>
+        <li>Vincular usuario con personal (para cobradores)</li>
+        <li>Activar / desactivar cuentas</li>
+        <li>Restablecer contraseñas</li>
+      </ul>
+
+      <h4>Comisiones</h4>
+      <p>El sistema calcula automáticamente las comisiones de cobradores según los pagos registrados. El administrador puede:</p>
+      <ul class="func-list">
+        <li>Ver comisiones generadas por período</li>
+        <li>Liquidar comisiones pendientes</li>
+        <li>Marcar comisiones como pagadas</li>
+      </ul>
+
+    </div>
+  </div>
+
+  <!-- 4. SUPERVISOR -->
+  <div class="section" id="supervisor">
+    <div class="section-header">
+      <div class="section-icon icon-super">🔍</div>
+      <div>
+        <h2>4. Perfil: Supervisor</h2>
+        <p>Acceso de lectura completa — no puede crear ni modificar datos</p>
+      </div>
+    </div>
+    <div class="section-body">
+
+      <div class="alert alert-success">
+        <span class="alert-icon">✅</span>
+        <span>El Supervisor puede <strong>ver todo</strong> lo que ve el Administrador: clientes, créditos, pagos, rendiciones, caja, reportes, personal y usuarios. La diferencia es que <strong>no puede crear, editar ni eliminar</strong> ningún dato.</span>
+      </div>
+
+      <!-- Dashboard -->
+      <h3 id="super-dashboard">4.1 Dashboard y Consultas</h3>
+      <p>Al ingresar ve el mismo Dashboard que el Administrador con todos los indicadores financieros. Puede navegar libremente por:</p>
+      <ul class="func-list">
+        <li>Listado y ficha de clientes (solo lectura)</li>
+        <li>Listado y ficha de créditos con calendario de cuotas (solo lectura)</li>
+        <li>Historial de pagos y recibos PDF</li>
+        <li>Listado y ficha de rendiciones</li>
+        <li>Caja: ver todos los movimientos (no puede registrar ni eliminar)</li>
+        <li>Comisiones: ver el detalle (no puede liquidar)</li>
+        <li>Personal y zonas: ver el listado (no puede crear ni editar)</li>
+        <li>Usuarios: ver el listado (no puede crear ni editar)</li>
+      </ul>
+
+      <!-- Reportes -->
+      <h3 id="super-reportes">4.2 Reportes y Exportaciones</h3>
+      <p>El Supervisor tiene acceso completo a todos los reportes y puede exportarlos a PDF igual que el Administrador:</p>
+      <ul class="func-list">
+        <li>Reportes financieros con filtro de fechas</li>
+        <li>Exportar PDF de Clientes, Créditos, Cobros y Cobranza</li>
+        <li>Ver próximos vencimientos</li>
+        <li>Ver clientes en atraso</li>
+      </ul>
+
+      <!-- Limitaciones -->
+      <h3 id="super-limites">4.3 Limitaciones del perfil</h3>
+      <p>Lo que el Supervisor <strong>no puede</strong> hacer:</p>
+      <ul class="func-list blocked">
+        <li>Crear o editar clientes</li>
+        <li>Crear, editar, anular o refinanciar créditos</li>
+        <li>Registrar o anular pagos</li>
+        <li>Crear rendiciones</li>
+        <li>Registrar o eliminar movimientos de caja</li>
+        <li>Liquidar o marcar comisiones como pagadas</li>
+        <li>Crear, editar o desactivar personal y zonas</li>
+        <li>Crear, editar o desactivar usuarios del sistema</li>
+        <li>Registrar visitas de cobranza en campo</li>
+      </ul>
+
+      <div class="alert alert-warning">
+        <span class="alert-icon">⚠️</span>
+        <span>Si el Supervisor intenta realizar una acción restringida (por ejemplo, acceder a una URL de edición directamente), el sistema mostrará un error de acceso denegado y lo redirigirá al Dashboard.</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 5. COBRADOR -->
+  <div class="section" id="cobrador">
+    <div class="section-header">
+      <div class="section-icon icon-cobrador">📱</div>
+      <div>
+        <h2>5. Perfil: Cobrador</h2>
+        <p>Diseño mobile-first para trabajo en campo — solo ve su cartera asignada</p>
+      </div>
+    </div>
+    <div class="section-body">
+
+      <div class="alert alert-info">
+        <span class="alert-icon">ℹ️</span>
+        <span>El Cobrador accede al sistema desde su celular. Al ingresar es redirigido automáticamente a su panel de cobranza. <strong>Solo puede ver los clientes y créditos asignados a su zona.</strong></span>
+      </div>
+
+      <!-- Mi Día -->
+      <h3 id="cobrador-dia">5.1 Mi Día de Cobranza</h3>
+      <p>Es la pantalla principal del cobrador (<span class="url">/consulta</span>). Muestra las cuotas que vencen hoy o están vencidas para los clientes de su zona.</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="fc-icon">📅</span>
+          <div class="fc-title">Cuotas de Hoy</div>
+          <div class="fc-desc">Lista de clientes con cuotas que vencen en el día, ordenados por zona.</div>
+        </div>
+        <div class="feature-card">
+          <span class="fc-icon">⚠️</span>
+          <div class="fc-title">Cuotas Vencidas</div>
+          <div class="fc-desc">Clientes con cuotas en atraso que requieren seguimiento.</div>
+        </div>
+        <div class="feature-card">
+          <span class="fc-icon">💵</span>
+          <div class="fc-title">Total del Día</div>
+          <div class="fc-desc">Suma de los montos a cobrar en la jornada.</div>
+        </div>
+      </div>
+
+      <!-- Mi Cartera -->
+      <h3 id="cobrador-cartera">5.2 Mi Cartera</h3>
+      <p>Acceso desde <span class="url">/consulta/buscar</span>. Muestra todos los clientes activos de la zona del cobrador.</p>
+      <ul class="func-list">
+        <li>Buscar clientes por nombre o DNI (dentro de su zona)</li>
+        <li>Ver ficha del cliente: datos de contacto y créditos activos</li>
+        <li>Ver detalle del crédito: saldo, cuotas pagadas y pendientes</li>
+      </ul>
+
+      <!-- Registrar visita -->
+      <h3 id="cobrador-visita">5.3 Registrar Visita de Cobranza</h3>
+      <p>Al ingresar a un crédito, el cobrador puede registrar el resultado de la visita de campo. Esta información queda guardada en el sistema para seguimiento.</p>
+
+      <h4>Tipos de resultado de visita</h4>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="fc-icon">✅</span>
+          <div class="fc-title">Cobro Realizado</div>
+          <div class="fc-desc">Se acordó el pago. El administrador lo confirma registrando el pago en el sistema.</div>
+        </div>
+        <div class="feature-card">
+          <span class="fc-icon">📅</span>
+          <div class="fc-title">Promesa de Pago</div>
+          <div class="fc-desc">El cliente prometió pagar en una fecha determinada.</div>
+        </div>
+        <div class="feature-card">
+          <span class="fc-icon">🚪</span>
+          <div class="fc-title">Sin Contacto</div>
+          <div class="fc-desc">No se pudo contactar al cliente (no estaba, no atendió).</div>
+        </div>
+        <div class="feature-card">
+          <span class="fc-icon">❌</span>
+          <div class="fc-title">Se Negó a Pagar</div>
+          <div class="fc-desc">El cliente estuvo presente pero no pagó.</div>
+        </div>
+      </div>
+
+      <div class="alert alert-warning">
+        <span class="alert-icon">⚠️</span>
+        <span>El cobrador <strong>no registra pagos</strong> directamente — solo registra la visita. El pago es confirmado y registrado por el Administrador.</span>
+      </div>
+
+      <h4>Lo que el cobrador NO puede hacer</h4>
+      <ul class="func-list blocked">
+        <li>Crear o editar clientes ni créditos</li>
+        <li>Registrar pagos en el sistema</li>
+        <li>Ver el Dashboard administrativo</li>
+        <li>Acceder a reportes, caja ni comisiones</li>
+        <li>Ver clientes fuera de su zona asignada</li>
+      </ul>
+
+    </div>
+  </div>
+
+  <!-- 6. MATRIZ DE PERMISOS -->
+  <div class="section" id="permisos">
+    <div class="section-header">
+      <div class="section-icon icon-gen">📊</div>
+      <div>
+        <h2>6. Matriz de Permisos</h2>
+        <p>Resumen completo de accesos por perfil</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <p>✓ = Acceso completo &nbsp;|&nbsp; <span class="ro">LECT</span> = Solo lectura &nbsp;|&nbsp; — = Sin acceso</p>
+
+      <table class="perm-table">
+        <thead>
+          <tr>
+            <th style="width:42%">Función</th>
+            <th>Admin</th>
+            <th>Supervisor</th>
+            <th>Cobrador</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="cat" colspan="4">Dashboard y Navegación</td></tr>
+          <tr><td>Dashboard administrativo</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">—</td></tr>
+          <tr><td>Panel de cobranza (Mi Día)</td><td class="no">—</td><td class="no">—</td><td class="ok">✓</td></tr>
+
+          <tr><td class="cat" colspan="4">Clientes</td></tr>
+          <tr><td>Ver listado de clientes</td><td class="ok">✓</td><td class="ro">LECT</td><td class="no">—</td></tr>
+          <tr><td>Ver ficha del cliente</td><td class="ok">✓</td><td class="ro">LECT</td><td class="ro">Solo su zona</td></tr>
+          <tr><td>Crear cliente nuevo</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+          <tr><td>Editar cliente</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+
+          <tr><td class="cat" colspan="4">Créditos</td></tr>
+          <tr><td>Ver listado de créditos</td><td class="ok">✓</td><td class="ro">LECT</td><td class="no">—</td></tr>
+          <tr><td>Ver ficha del crédito</td><td class="ok">✓</td><td class="ro">LECT</td><td class="ro">Solo su zona</td></tr>
+          <tr><td>Crear crédito</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+          <tr><td>Editar crédito</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+          <tr><td>Refinanciar crédito</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+          <tr><td>Anular crédito</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+          <tr><td>Marcar como incobrable</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+
+          <tr><td class="cat" colspan="4">Pagos y Recibos</td></tr>
+          <tr><td>Ver historial de pagos</td><td class="ok">✓</td><td class="ro">LECT</td><td class="no">—</td></tr>
+          <tr><td>Registrar pago</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+          <tr><td>Anular pago</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+          <tr><td>Descargar recibo PDF</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">—</td></tr>
+
+          <tr><td class="cat" colspan="4">Rendiciones</td></tr>
+          <tr><td>Ver listado de rendiciones</td><td class="ok">✓</td><td class="ro">LECT</td><td class="no">—</td></tr>
+          <tr><td>Ver ficha de rendición</td><td class="ok">✓</td><td class="ro">LECT</td><td class="no">—</td></tr>
+          <tr><td>Crear rendición</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+
+          <tr><td class="cat" colspan="4">Cobranza en campo</td></tr>
+          <tr><td>Registrar visita de cobranza</td><td class="no">—</td><td class="no">—</td><td class="ok">✓</td></tr>
+          <tr><td>Ver cartera propia</td><td class="no">—</td><td class="no">—</td><td class="ok">✓</td></tr>
+
+          <tr><td class="cat" colspan="4">Caja</td></tr>
+          <tr><td>Ver movimientos de caja</td><td class="ok">✓</td><td class="ro">LECT</td><td class="no">—</td></tr>
+          <tr><td>Registrar movimiento</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+          <tr><td>Eliminar movimiento</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+
+          <tr><td class="cat" colspan="4">Reportes</td></tr>
+          <tr><td>Ver reportes financieros</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">—</td></tr>
+          <tr><td>Exportar PDF de reportes</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">—</td></tr>
+          <tr><td>Ver vencimientos y atrasos</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">—</td></tr>
+
+          <tr><td class="cat" colspan="4">Administración</td></tr>
+          <tr><td>Ver comisiones</td><td class="ok">✓</td><td class="ro">LECT</td><td class="no">—</td></tr>
+          <tr><td>Liquidar y pagar comisiones</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+          <tr><td>Ver personal y zonas</td><td class="ok">✓</td><td class="ro">LECT</td><td class="no">—</td></tr>
+          <tr><td>Crear/editar personal y zonas</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+          <tr><td>Ver usuarios del sistema</td><td class="ok">✓</td><td class="ro">LECT</td><td class="no">—</td></tr>
+          <tr><td>Crear/editar usuarios</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="manual-footer">
+    <strong>Credinor</strong> — Sistema de Gestión de Créditos &nbsp;|&nbsp; Manual de Usuario v1.0 &nbsp;|&nbsp; Mayo 2026<br>
+    <span style="color:#9ca3af;">credinor.credinort.uno</span>
+  </div>
+
+</div>
+
+</body>
+</html>
