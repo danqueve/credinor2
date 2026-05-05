@@ -24,13 +24,13 @@ $tipoBadge = [
         <i class="bi bi-bar-chart-line me-2 text-info"></i>Reportes y Analíticas
     </h2>
     <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
-        <a href="<?= $appUrl ?>/reportes/exportar/clientes?format=pdf" class="btn btn-sm btn-outline-danger">
+        <a href="<?= $appUrl ?>/reportes/exportar/clientes?format=pdf" class="btn btn-sm btn-outline-danger" target="_blank" rel="noopener">
             <i class="bi bi-file-pdf me-1"></i>Clientes
         </a>
-        <a href="<?= $appUrl ?>/reportes/exportar/creditos?format=pdf" class="btn btn-sm btn-outline-danger">
+        <a href="<?= $appUrl ?>/reportes/exportar/creditos?format=pdf" class="btn btn-sm btn-outline-danger" target="_blank" rel="noopener">
             <i class="bi bi-file-pdf me-1"></i>Creditos
         </a>
-        <a href="<?= $appUrl ?>/reportes/exportar/cobros?format=pdf&desde=<?= urlencode($d) ?>&hasta=<?= urlencode($h) ?>" class="btn btn-sm btn-outline-danger">
+        <a href="<?= $appUrl ?>/reportes/exportar/cobros?format=pdf&desde=<?= urlencode($d) ?>&hasta=<?= urlencode($h) ?>" class="btn btn-sm btn-outline-danger" target="_blank" rel="noopener">
             <i class="bi bi-file-pdf me-1"></i>Cobros
         </a>
     <form action="<?= $appUrl ?>/reportes" method="GET" class="d-flex gap-2 align-items-center flex-wrap">

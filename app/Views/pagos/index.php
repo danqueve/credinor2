@@ -7,7 +7,7 @@ ob_start();
     <h2 class="h3 mb-0 text-white fw-bold"><i class="bi bi-receipt me-2 text-success"></i>Historial de Pagos</h2>
     <div class="d-flex gap-2 flex-wrap justify-content-end">
         <a href="<?= $appUrl ?>/reportes/exportar/cobros?format=pdf&q=<?= urlencode($search ?? '') ?>&desde=<?= urlencode($desde ?? '') ?>&hasta=<?= urlencode($hasta ?? '') ?>"
-           class="btn btn-outline-danger">
+           class="btn btn-outline-danger" target="_blank" rel="noopener">
             <i class="bi bi-file-pdf me-1"></i> Exportar PDF
         </a>
     <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>

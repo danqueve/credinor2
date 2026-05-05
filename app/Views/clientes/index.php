@@ -15,7 +15,7 @@ ob_start();
     </div>
     <div class="d-flex gap-2 flex-wrap justify-content-end">
         <a href="<?= $appUrl ?>/reportes/exportar/clientes?format=pdf&q=<?= urlencode($search ?? '') ?>"
-           class="btn btn-outline-danger">
+           class="btn btn-outline-danger" target="_blank" rel="noopener">
             <i class="bi bi-file-pdf me-1"></i> Exportar PDF
         </a>
     <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>

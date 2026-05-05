@@ -8,7 +8,7 @@ $password = 'Credinor2026!';  // Cambiarlo después del primer login
 $rol      = 'admin';
 
 try {
-    $pdo  = new PDO('mysql:host=localhost;port=3306;dbname=credinor2;charset=utf8mb4', 'root', '');
+    $pdo  = new PDO('mysql:host=localhost;port=3306;dbname=a0040079_credin;charset=utf8mb4', 'a0040079_credin', 'GEvulagu62');
     $hash = password_hash($password, PASSWORD_ARGON2ID);
 
     $stmt = $pdo->prepare(

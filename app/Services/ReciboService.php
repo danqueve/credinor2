@@ -54,11 +54,11 @@ class ReciboService
 
         $mpdf = new Mpdf([
             'mode'          => 'utf-8',
-            'format'        => [148, 105],   // A6 apaisado, tamaño recibo
-            'margin_left'   => 8,
-            'margin_right'  => 8,
-            'margin_top'    => 8,
-            'margin_bottom' => 8,
+            'format'        => 'A5',
+            'margin_left'   => 12,
+            'margin_right'  => 12,
+            'margin_top'    => 12,
+            'margin_bottom' => 12,
         ]);
         $mpdf->SetTitle('Recibo ' . $numero);
         error_log("ReciboService: Iniciando WriteHTML...");
@@ -106,23 +106,48 @@ class ReciboService
 
         return <<<HTML
         <style>
-            body { font-family: Arial, sans-serif; font-size: 11px; color: #222; margin: 0; }
-            .header { background: #0f172a; color: #fff; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; }
-            .header h1 { margin: 0; font-size: 16px; letter-spacing: 1px; }
-            .header .num { font-size: 12px; color: #94a3b8; margin-top: 2px; }
-            table { width: 100%; border-collapse: collapse; }
-            td { padding: 4px 6px; border-bottom: 1px solid #e5e7eb; }
-            td.label { color: #6b7280; width: 45%; }
-            td.value { font-weight: bold; }
-            .monto { font-size: 20px; color: #16a34a; font-weight: bold; text-align: center; padding: 8px 0; }
-            .footer { font-size: 9px; color: #9ca3af; text-align: center; margin-top: 10px; border-top: 1px solid #e5e7eb; padding-top: 6px; }
+            * { font-family: DejaVu Sans, sans-serif; }
+            body { font-size: 11px; color: #1a1a2e; margin: 0; padding: 0; }
+
+            .header { background: #1e3a5f; color: #fff; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; }
+            .header-row { width: 100%; }
+            .header-row td { padding: 0; border: none; vertical-align: middle; }
+            .company { font-size: 20px; font-weight: bold; letter-spacing: 1.5px; color: #ffffff; }
+            .recibo-num { font-size: 10px; color: #93c5fd; margin-top: 3px; }
+            .recibo-badge { text-align: right; font-size: 8px; color: #93c5fd; text-transform: uppercase; letter-spacing: 0.5px; }
+
+            .monto-box { border: 2px solid #16a34a; border-radius: 6px; text-align: center; padding: 12px 0; margin-bottom: 16px; }
+            .monto-label { font-size: 8.5px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+            .monto-value { font-size: 26px; font-weight: bold; color: #16a34a; }
+
+            table.detalle { width: 100%; border-collapse: collapse; }
+            table.detalle td { padding: 6px 4px; border-bottom: 1px solid #e5e7eb; font-size: 10.5px; vertical-align: middle; }
+            table.detalle td.label { color: #6b7280; width: 42%; font-size: 9.5px; }
+            table.detalle td.value { font-weight: bold; color: #111827; }
+
+            .divider { border: none; border-top: 1px solid #e5e7eb; margin: 14px 0; }
+
+            .footer { font-size: 8px; color: #9ca3af; text-align: center; margin-top: 14px; border-top: 1px solid #e5e7eb; padding-top: 8px; line-height: 1.5; }
         </style>
+
         <div class="header">
-            <h1>CREDINOR</h1>
-            <div class="num">Recibo Nº {$d['numero_recibo']}</div>
+            <table class="header-row" cellspacing="0" cellpadding="0">
+                <tr>
+                    <td>
+                        <div class="company">CREDINOR</div>
+                        <div class="recibo-num">Recibo N&ordm; {$d['numero_recibo']}</div>
+                    </td>
+                    <td class="recibo-badge">Comprobante<br>de pago</td>
+                </tr>
+            </table>
         </div>
-        <div class="monto">{$monto}</div>
-        <table>
+
+        <div class="monto-box">
+            <div class="monto-label">Monto abonado</div>
+            <div class="monto-value">{$monto}</div>
+        </div>
+
+        <table class="detalle" cellspacing="0" cellpadding="0">
             <tr><td class="label">Cliente</td><td class="value">{$d['cliente_nombre']}</td></tr>
             <tr><td class="label">DNI</td><td class="value">{$d['cliente_dni']}</td></tr>
             <tr><td class="label">Crédito</td><td class="value">{$d['codigo_credito']}</td></tr>
@@ -133,7 +158,11 @@ class ReciboService
             <tr><td class="label">Cobrador</td><td class="value">{$d['cobrador_nombre']}</td></tr>
             <tr><td class="label">Registrado</td><td class="value">{$fechaReg}</td></tr>
         </table>
-        <div class="footer">Este recibo es comprobante válido de pago — Credinor San Miguel de Tucumán</div>
+
+        <div class="footer">
+            Este recibo es comprobante v&aacute;lido de pago<br>
+            Credinor &mdash; San Miguel de Tucum&aacute;n
+        </div>
         HTML;
     }
 }

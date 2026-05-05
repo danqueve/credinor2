@@ -7,7 +7,7 @@ ob_start();
     <h2 class="h3 mb-0 text-white fw-bold"><i class="bi bi-cash-stack me-2 text-success"></i>Créditos</h2>
     <div class="d-flex gap-2 flex-wrap justify-content-end">
         <a href="<?= $appUrl ?>/reportes/exportar/creditos?format=pdf&q=<?= urlencode($search ?? '') ?>&estado=<?= urlencode($estado ?? '') ?>"
-           class="btn btn-outline-danger">
+           class="btn btn-outline-danger" target="_blank" rel="noopener">
             <i class="bi bi-file-pdf me-1"></i> Exportar PDF
         </a>
     <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>

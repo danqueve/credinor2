@@ -74,9 +74,15 @@ ob_start();
                                 <span class="input-group-text bg-slate-700 border-secondary text-secondary">$</span>
                                 <input type="number" name="valor_cuota" step="0.01" min="0.01" required
                                        class="form-control bg-slate-700 border-secondary text-light"
+                                       :class="valorCuota > 0 && capital > 0 && valorCuota >= capital ? 'border-warning' : ''"
                                        x-model.number="valorCuota" @input="calcular()"
                                        value="<?= htmlspecialchars((string)$credito->valor_cuota) ?>"
                                        <?= $soloOperativo ? 'readonly' : '' ?>>
+                            </div>
+                            <div x-show="valorCuota > 0 && capital > 0 && valorCuota >= capital"
+                                 class="alert alert-warning py-2 px-3 small mt-2 mb-0" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                <strong>¡Atención!</strong> El valor de cuota supera el capital prestado. Verificá que el monto sea correcto antes de continuar.
                             </div>
                         </div>
                         <div class="col-12 col-md-4">
