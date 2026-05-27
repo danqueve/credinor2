@@ -83,6 +83,7 @@ ob_start();
                     <th>Cliente</th>
                     <th class="text-end">Capital</th>
                     <th class="text-end">Total</th>
+                    <th class="text-end">Cuota</th>
                     <th class="text-end">Saldo</th>
                     <th>Frecuencia</th>
                     <th>Cobrador</th>
@@ -94,7 +95,7 @@ ob_start();
             <tbody>
             <?php if (empty($creditos)): ?>
                 <tr>
-                    <td colspan="10" class="text-center text-secondary py-5">
+                    <td colspan="11" class="text-center text-secondary py-5">
                         <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                         No se encontraron créditos.
                     </td>
@@ -114,6 +115,7 @@ ob_start();
                     </td>
                     <td class="text-end text-light">$<?= number_format($c->capital, 2, ',', '.') ?></td>
                     <td class="text-end text-light">$<?= number_format($c->monto_total, 2, ',', '.') ?></td>
+                    <td class="text-end text-light">$<?= number_format($c->valor_cuota, 2, ',', '.') ?></td>
                     <td class="text-end fw-bold <?= $c->saldo_pendiente > 0 ? 'text-warning' : 'text-success' ?>">
                         $<?= number_format($c->saldo_pendiente, 2, ',', '.') ?>
                     </td>
