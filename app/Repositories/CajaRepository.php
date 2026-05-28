@@ -66,6 +66,20 @@ class CajaRepository
         ")->fetchColumn();
     }
 
+    /** Movimientos manuales en un rango de fechas. */
+    public function getEnRango(string $desde, string $hasta): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT cm.*, u.nombre AS usuario_nombre
+            FROM caja_movimientos cm
+            LEFT JOIN usuarios u ON cm.created_by = u.id_usuario
+            WHERE cm.deleted_at IS NULL AND cm.fecha BETWEEN ? AND ?
+            ORDER BY cm.fecha DESC, cm.id_movimiento DESC
+        ");
+        $stmt->execute([$desde, $hasta]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     /** Suma ingresos/egresos manuales en un rango. */
     public function getTotalesEnRango(string $desde, string $hasta): array
     {

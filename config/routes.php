@@ -64,7 +64,8 @@ return [
         '/reportes/exportar/cobros'   => [\App\Controllers\ReporteController::class, 'exportCobros'],
 
         // Caja
-        '/caja' => [\App\Controllers\CajaController::class, 'index'],
+        '/caja'          => [\App\Controllers\CajaController::class, 'index'],
+        '/caja/exportar' => [\App\Controllers\CajaController::class, 'exportPdf'],
 
         // Vista cliente — estado de cuenta
         '/mi-cuenta'         => [\App\Controllers\CuentaClienteController::class, 'index'],

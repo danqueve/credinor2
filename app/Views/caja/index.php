@@ -3,6 +3,8 @@ $appUrl = $_ENV['APP_URL'] ?? '';
 ob_start();
 $fmt = fn($n) => '$' . number_format((float)$n, 2, ',', '.');
 $canManage = \App\Helpers\Auth::canManage();
+$d = $filtros['desde'];
+$h = $filtros['hasta'];
 ?>
 
 <!-- Encabezado -->
@@ -10,6 +12,18 @@ $canManage = \App\Helpers\Auth::canManage();
     <h2 class="h3 mb-0 text-white fw-bold">
         <i class="bi bi-safe2-fill me-2 text-success"></i>Caja — Movimientos
     </h2>
+    <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
+        <a href="<?= $appUrl ?>/caja/exportar?desde=<?= urlencode($d) ?>&hasta=<?= urlencode($h) ?>"
+           class="btn btn-sm btn-outline-danger" target="_blank" rel="noopener">
+            <i class="bi bi-file-pdf me-1"></i>Exportar PDF
+        </a>
+        <form action="<?= $appUrl ?>/caja" method="GET" class="d-flex gap-2 align-items-center flex-wrap">
+            <input type="date" name="desde" class="form-control form-control-sm bg-slate-800 border-secondary text-light" value="<?= $d ?>">
+            <span class="text-secondary small">—</span>
+            <input type="date" name="hasta" class="form-control form-control-sm bg-slate-800 border-secondary text-light" value="<?= $h ?>">
+            <button class="btn btn-sm btn-primary"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+        </form>
+    </div>
 </div>
 
 <!-- Flash messages -->
@@ -109,10 +123,14 @@ $canManage = \App\Helpers\Auth::canManage();
     <!-- ── Historial de movimientos manuales ── -->
     <div class="col-12 <?= $canManage ? 'col-lg-8' : '' ?>">
         <div class="card bg-slate-800 border-secondary">
-            <div class="card-header bg-transparent border-secondary py-3">
+            <div class="card-header bg-transparent border-secondary py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h6 class="mb-0 fw-bold text-light">
-                    <i class="bi bi-clock-history text-info me-2"></i>Últimos movimientos manuales
+                    <i class="bi bi-clock-history text-info me-2"></i>Movimientos manuales
                 </h6>
+                <span class="text-secondary small">
+                    <?= date('d/m/Y', strtotime($d)) ?> — <?= date('d/m/Y', strtotime($h)) ?>
+                    &nbsp;·&nbsp; <?= count($movimientos) ?> registro<?= count($movimientos) !== 1 ? 's' : '' ?>
+                </span>
             </div>
             <div class="table-responsive">
                 <table class="table table-dark table-sm align-middle mb-0">

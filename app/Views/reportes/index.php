@@ -113,7 +113,7 @@ $tipoBadge = [
 </p>
 <div class="card bg-slate-800 border-secondary mb-4">
     <div class="table-responsive">
-        <table class="table table-dark table-sm align-middle mb-0">
+        <table class="table table-dark table-sm align-middle mb-0" id="tablaMovimientos">
             <thead>
                 <tr class="text-secondary small text-uppercase">
                     <th>Fecha</th>
@@ -123,12 +123,12 @@ $tipoBadge = [
                     <th>Usuario</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="movimientosBody">
             <?php foreach ($movimientos as $mv):
                 $tb = $tipoBadge[$mv['tipo']] ?? ['class'=>'bg-secondary','icon'=>'bi-circle','label'=>$mv['tipo']];
                 $esEntrada = in_array($mv['tipo'], ['cobranza','ingreso']);
             ?>
-                <tr>
+                <tr class="mov-row">
                     <td class="text-light text-nowrap"><?= date('d/m/Y', strtotime($mv['fecha'])) ?></td>
                     <td>
                         <span class="badge <?= $tb['class'] ?>">
@@ -150,12 +150,74 @@ $tipoBadge = [
             </tbody>
         </table>
     </div>
-    <?php if (count($movimientos) >= 200): ?>
-    <div class="card-footer bg-transparent border-secondary text-secondary small text-center">
-        Mostrando los últimos 200 movimientos del período. Ajustá el rango de fechas para ver más.
+    <div class="card-footer bg-transparent border-secondary py-2" id="movPaginacion" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span class="text-secondary small" id="movInfo"></span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0" id="movPaginas"></ul>
+            </nav>
+        </div>
     </div>
-    <?php endif; ?>
 </div>
+
+<script>
+(function () {
+    const PER_PAGE = 20;
+    const rows = Array.from(document.querySelectorAll('#movimientosBody .mov-row'));
+    const total = rows.length;
+    if (total <= PER_PAGE) return;
+
+    let currentPage = 1;
+    const totalPages = Math.ceil(total / PER_PAGE);
+    const infoEl   = document.getElementById('movInfo');
+    const pagNav   = document.getElementById('movPaginas');
+    const footer   = document.getElementById('movPaginacion');
+
+    footer.style.display = '';
+
+    function render(page) {
+        currentPage = page;
+        const from = (page - 1) * PER_PAGE;
+        const to   = Math.min(from + PER_PAGE, total);
+
+        rows.forEach((r, i) => {
+            r.style.display = (i >= from && i < to) ? '' : 'none';
+        });
+
+        infoEl.textContent = `Mostrando ${from + 1}–${to} de ${total} movimientos`;
+
+        pagNav.innerHTML = '';
+
+        const prev = document.createElement('li');
+        prev.className = 'page-item' + (page === 1 ? ' disabled' : '');
+        prev.innerHTML = '<a class="page-link bg-transparent border-secondary text-secondary" href="#">‹</a>';
+        prev.querySelector('a').addEventListener('click', e => { e.preventDefault(); if (page > 1) render(page - 1); });
+        pagNav.appendChild(prev);
+
+        const maxLinks = 7;
+        let start = Math.max(1, page - Math.floor(maxLinks / 2));
+        let end   = Math.min(totalPages, start + maxLinks - 1);
+        if (end - start < maxLinks - 1) start = Math.max(1, end - maxLinks + 1);
+
+        for (let p = start; p <= end; p++) {
+            const li = document.createElement('li');
+            li.className = 'page-item' + (p === page ? ' active' : '');
+            li.innerHTML = `<a class="page-link bg-transparent border-secondary ${p === page ? 'text-white' : 'text-secondary'}" href="#">${p}</a>`;
+            const pCopy = p;
+            li.querySelector('a').addEventListener('click', e => { e.preventDefault(); render(pCopy); });
+            pagNav.appendChild(li);
+        }
+
+        const next = document.createElement('li');
+        next.className = 'page-item' + (page === totalPages ? ' disabled' : '');
+        next.innerHTML = '<a class="page-link bg-transparent border-secondary text-secondary" href="#">›</a>';
+        next.querySelector('a').addEventListener('click', e => { e.preventDefault(); if (page < totalPages) render(page + 1); });
+        pagNav.appendChild(next);
+    }
+
+    render(1);
+})();
+</script>
 
 <?php
 $content = ob_get_clean();
