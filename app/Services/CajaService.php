@@ -84,37 +84,66 @@ class CajaService
 
         $css = '<style>
             * { font-family: DejaVu Sans, sans-serif; }
-            body { font-size: 9px; color: #1a1a2e; margin: 0; padding: 0; }
-            .pdf-header { width: 100%; border-bottom: 3px solid #1e3a5f; padding-bottom: 8px; margin-bottom: 14px; }
-            .pdf-header td { vertical-align: bottom; padding: 0; }
-            .company { font-size: 17px; font-weight: bold; color: #1e3a5f; letter-spacing: 1px; }
-            .report-title { font-size: 12px; font-weight: bold; color: #374151; margin-top: 3px; }
+            body { font-size: 9px; color: #111111; margin: 0; padding: 0; }
+
+            /* ── Cabecera ── */
+            .pdf-header { width: 100%; border-bottom: 2px solid #111111; padding-bottom: 10px; margin-bottom: 16px; }
+            .pdf-header td { vertical-align: middle; padding: 0; }
+            .company { font-size: 20px; font-weight: bold; color: #111111; letter-spacing: 2px; text-transform: uppercase; }
+            .report-title { font-size: 10px; font-weight: bold; color: #111111; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.8px; }
             .report-sub { font-size: 8px; color: #6b7280; margin-top: 3px; }
             .date-block { text-align: right; }
             .date-label { font-size: 7px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
-            .date-value { font-size: 10px; font-weight: bold; color: #1e3a5f; margin-top: 2px; }
-            table.data { border-collapse: collapse; width: 100%; margin-top: 0; }
-            table.data thead tr { background-color: #1e3a5f; }
-            table.data thead th { padding: 7px 5px; text-align: left; font-weight: bold; font-size: 7.5px; color: #fff; letter-spacing: 0.3px; border: none; }
+            .date-value { font-size: 10px; font-weight: bold; color: #111111; margin-top: 2px; }
+
+            /* ── Tabla ── */
+            table.data { border-collapse: collapse; width: 100%; }
+            table.data thead tr { background-color: #111111; }
+            table.data thead th {
+                padding: 8px 6px;
+                text-align: left;
+                font-weight: bold;
+                font-size: 7.5px;
+                color: #ffffff;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                border: none;
+            }
             table.data tbody tr.odd  { background-color: #ffffff; }
-            table.data tbody tr.even { background-color: #f0f4f8; }
-            table.data tbody td { padding: 5px 5px; font-size: 8px; color: #1f2937; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
-            table.data tfoot tr { background-color: #1e3a5f; }
-            table.data tfoot td { padding: 7px 5px; font-size: 8.5px; font-weight: bold; color: #fff; border: none; }
+            table.data tbody tr.even { background-color: #f8fafc; }
+            table.data tbody td {
+                padding: 7px 6px;
+                font-size: 10px;
+                color: #111111;
+                border-bottom: 1px solid #e5e7eb;
+                vertical-align: middle;
+            }
+            table.data tfoot tr.tot-line { background-color: #f3f4f6; }
+            table.data tfoot td {
+                padding: 6px 6px;
+                font-size: 8.5px;
+                font-weight: bold;
+                color: #111111;
+                border-top: 2px solid #111111;
+                border-bottom: none;
+            }
+
+            /* ── Utilidades ── */
             .num    { color: #9ca3af; text-align: center; font-size: 7.5px; }
             .right  { text-align: right; }
             .center { text-align: center; }
-            .ingreso { color: #15803d; }
-            .egreso  { color: #b91c1c; }
-            .tipo-ingreso { color: #15803d; font-weight: bold; }
-            .tipo-egreso  { color: #b91c1c; font-weight: bold; }
+            .ingreso      { color: #166534; font-weight: bold; }
+            .egreso       { color: #991b1b; font-weight: bold; }
+            .tipo-ingreso { color: #166534; font-weight: bold; }
+            .tipo-egreso  { color: #991b1b; font-weight: bold; }
+            .label-tot    { color: #6b7280; font-size: 7.5px; text-transform: uppercase; letter-spacing: 0.5px; }
         </style>';
 
         $header = '<table class="pdf-header" cellspacing="0" cellpadding="0"><tr>
             <td>
-                <div class="company">CREDINOR</div>
+                <div class="company">Credinor</div>
                 <div class="report-title">Caja &mdash; Movimientos Manuales</div>
-                <div class="report-sub">Período: ' . $periodo . ' &mdash; ' . $registros . ' registros</div>
+                <div class="report-sub">Período: ' . $periodo . ' &nbsp;&middot;&nbsp; ' . $registros . ' registros</div>
             </td>
             <td class="date-block">
                 <div class="date-label">Generado el</div>
@@ -133,12 +162,12 @@ class CajaService
                     <th style="width:16%">Usuario</th>
                 </tr></thead>
                 <tbody>' . ($filas ?: '<tr><td colspan="6" class="center" style="padding:12px;color:#9ca3af;">Sin movimientos en el período seleccionado.</td></tr>') . '</tbody>
-                <tfoot><tr>
-                    <td colspan="4" class="right">INGRESOS:</td>
+                <tfoot><tr class="tot-line">
+                    <td colspan="4" class="right label-tot">TOTAL INGRESOS</td>
                     <td class="right ingreso">$ ' . number_format((float)$totales['ingresos'], 2, ',', '.') . '</td>
                     <td></td>
-                </tr><tr>
-                    <td colspan="4" class="right">EGRESOS:</td>
+                </tr><tr class="tot-line">
+                    <td colspan="4" class="right label-tot">TOTAL EGRESOS</td>
                     <td class="right egreso">$ ' . number_format((float)$totales['egresos'], 2, ',', '.') . '</td>
                     <td></td>
                 </tr></tfoot>
@@ -152,10 +181,10 @@ class CajaService
             'margin_right'  => 14,
         ]);
         $mpdf->SetHTMLFooter(
-            '<table width="100%" style="border-top:1px solid #e2e8f0;padding-top:4px;">
+            '<table width="100%" style="border-top:1px solid #111111;padding-top:4px;">
                 <tr>
-                    <td style="font-size:7px;color:#9ca3af;font-family:DejaVu Sans,sans-serif;">CREDINOR &mdash; Caja</td>
-                    <td style="font-size:7px;color:#9ca3af;text-align:right;font-family:DejaVu Sans,sans-serif;">P&aacute;gina {PAGENO} de {nb}</td>
+                    <td style="font-size:7px;color:#111111;font-family:DejaVu Sans,sans-serif;">CREDINOR &mdash; Caja &mdash; Movimientos Manuales</td>
+                    <td style="font-size:7px;color:#111111;text-align:right;font-family:DejaVu Sans,sans-serif;">P&aacute;gina {PAGENO} de {nb}</td>
                 </tr>
             </table>'
         );
