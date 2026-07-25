@@ -35,6 +35,10 @@ $cuotasPendientes = count(array_filter($credito->cuotas, fn($q) => in_array($q->
                class="btn btn-primary">
                 <i class="bi bi-pencil-square me-1"></i> Editar
             </a>
+            <a href="<?= $appUrl ?>/creditos/exportar-pdf?id=<?= $credito->id_credito ?>"
+               class="btn btn-outline-info" target="_blank" rel="noopener">
+                <i class="bi bi-file-earmark-pdf me-1"></i> Exportar PDF
+            </a>
             <a href="<?= $appUrl ?>/pagos/nuevo?id_credito=<?= $credito->id_credito ?>"
                class="btn btn-success">
                 <i class="bi bi-plus-circle me-1"></i> Registrar Pago

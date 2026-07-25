@@ -12,6 +12,7 @@ use App\Repositories\CreditoRepository;
 use App\Repositories\ClienteRepository;
 use App\Repositories\PagoRepository;
 use App\Repositories\PersonalRepository;
+use App\Services\CreditoPdfService;
 use App\Services\CreditoService;
 use App\Services\CuotaCalendarioService;
 
@@ -87,6 +88,27 @@ class CreditoController
             'pagos'             => $pagos,
             'clienteIncobrable' => $clienteIncobrable,
         ]);
+    }
+
+    public function exportPdf(): void
+    {
+        Auth::requireAdminReadOnly();
+
+        $id = (int)($_GET['id'] ?? 0);
+        $credito = $this->creditoRepo->findById($id);
+
+        if (!$credito) {
+            $_SESSION['flash_error'] = 'Crédito no encontrado.';
+            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos');
+            exit;
+        }
+
+        $cliente = $this->clienteRepo->findById($credito->id_cliente);
+        $pagos = $this->pagoRepo->findByCredito($id);
+
+        $service = new CreditoPdfService();
+        $ruta = $service->generar($credito, $cliente, $pagos);
+        $service->descargar($ruta);
     }
 
     // ── Nuevo crédito ─────────────────────────────────────────────────────────

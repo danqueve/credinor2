@@ -38,6 +38,7 @@ return [
         // Créditos
         '/creditos'              => [\App\Controllers\CreditoController::class, 'index'],
         '/creditos/ficha'        => [\App\Controllers\CreditoController::class, 'ficha'],
+        '/creditos/exportar-pdf' => [\App\Controllers\CreditoController::class, 'exportPdf'],
         '/creditos/nuevo'        => [\App\Controllers\CreditoController::class, 'create'],
         '/creditos/editar'       => [\App\Controllers\CreditoController::class, 'edit'],
         '/creditos/refinanciar'  => [\App\Controllers\CreditoController::class, 'refinanciarForm'],
