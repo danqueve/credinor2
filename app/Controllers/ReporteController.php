@@ -81,6 +81,13 @@ class ReporteController
         $this->service->exportClientesPdf($search);
     }
 
+    public function exportClientesPorCobrador(): void
+    {
+        Auth::requireAdminReadOnly();
+        $idCobrador = (int)($_GET['id_cobrador'] ?? 0);
+        $this->service->exportClientesPorCobradorPdf($idCobrador);
+    }
+
     public function exportCreditos(): void
     {
         Auth::requireAdminReadOnly();

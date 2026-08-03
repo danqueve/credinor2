@@ -150,6 +150,7 @@ credinor2/
 | Tipo | Formato | Módulos |
 |------|---------|---------|
 | Lista de clientes | PDF | Reportes |
+| Cartera de clientes por cobrador | PDF | Personal |
 | Lista de créditos | PDF | Reportes |
 | Cobros por período | PDF | Reportes |
 | Créditos en atraso | PDF | Reportes |

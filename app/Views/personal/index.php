@@ -117,7 +117,7 @@ ob_start();
                                 <th>Rol Operativo</th>
                                 <th>Zona Asignada</th>
                                 <th>Comisión</th>
-                                <?php if($_SESSION['usuario_rol'] === 'admin'): ?>
+                                <?php if(in_array($_SESSION['usuario_rol'], ['admin', 'supervisor'], true)): ?>
                                     <th class="text-end">Acciones</th>
                                 <?php endif; ?>
                             </tr>
@@ -140,11 +140,20 @@ ob_start();
                                         </td>
                                         <td><?= htmlspecialchars($p->zona_nombre ?? 'Ninguna') ?></td>
                                         <td><?= number_format($p->comision_pct, 2) ?>%</td>
-                                        <?php if($_SESSION['usuario_rol'] === 'admin'): ?>
+                                        <?php if(in_array($_SESSION['usuario_rol'], ['admin', 'supervisor'], true)): ?>
                                             <td class="text-end">
-                                                <a href="<?= $appUrl ?>/personal/editar?id=<?= $p->id_personal ?>" class="btn btn-sm btn-outline-info">
-                                                    <i class="bi bi-pencil"></i> Editar
-                                                </a>
+                                                <?php if($_SESSION['usuario_rol'] === 'admin'): ?>
+                                                    <a href="<?= $appUrl ?>/personal/editar?id=<?= $p->id_personal ?>" class="btn btn-sm btn-outline-info">
+                                                        <i class="bi bi-pencil"></i> Editar
+                                                    </a>
+                                                <?php endif; ?>
+                                                <?php if($p->rol_operativo === 'cobrador'): ?>
+                                                    <a href="<?= $appUrl ?>/reportes/exportar/clientes-cobrador?id_cobrador=<?= $p->id_personal ?>"
+                                                       class="btn btn-sm btn-outline-danger" target="_blank" rel="noopener"
+                                                       title="Exportar cartera de clientes en PDF">
+                                                        <i class="bi bi-file-pdf"></i>
+                                                    </a>
+                                                <?php endif; ?>
                                             </td>
                                         <?php endif; ?>
                                     </tr>

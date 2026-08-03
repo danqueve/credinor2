@@ -5,17 +5,20 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Repositories\CajaRepository;
+use App\Repositories\PersonalRepository;
 use App\Repositories\ReporteRepository;
 
 class ReporteService
 {
     private ReporteRepository $repo;
     private CajaRepository $cajaRepo;
+    private PersonalRepository $personalRepo;
 
     public function __construct()
     {
-        $this->repo     = new ReporteRepository();
-        $this->cajaRepo = new CajaRepository();
+        $this->repo         = new ReporteRepository();
+        $this->cajaRepo     = new CajaRepository();
+        $this->personalRepo = new PersonalRepository();
     }
 
     public function getResumenAdmin(): array
@@ -311,6 +314,61 @@ class ReporteService
             </table>';
 
         $this->renderPdf($html, 'clientes_' . date('Y-m-d') . '.pdf');
+    }
+
+    public function exportClientesPorCobradorPdf(int $idCobrador): void
+    {
+        $cobrador = $this->personalRepo->findById($idCobrador);
+        if (!$cobrador) {
+            $_SESSION['flash_error'] = 'Cobrador no encontrado.';
+            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal');
+            exit;
+        }
+
+        $data = $this->repo->exportClientesPorCobrador($idCobrador);
+        $filas = '';
+        $totalSaldo = 0.0;
+        $i = 1;
+
+        foreach ($data as $item) {
+            $saldo = (float)$item['saldo_total'];
+            $totalSaldo += $saldo;
+            $clase = ($i % 2 === 0) ? 'even' : 'odd';
+            $filas .= '<tr class="' . $clase . '">
+                <td class="num">' . $i . '</td>
+                <td>' . htmlspecialchars($item['nombre'] ?? '') . '</td>
+                <td>' . htmlspecialchars($item['dni'] ?? '') . '</td>
+                <td>' . htmlspecialchars($item['telefono'] ?? '—') . '</td>
+                <td>' . htmlspecialchars($item['zona_nombre'] ?? '—') . '</td>
+                <td class="center">' . (int)$item['creditos_activos'] . '</td>
+                <td class="right">$ ' . number_format($saldo, 0, ',', '.') . '</td>
+                <td class="center">' . (!empty($item['proxima_cuota']) ? date('d/m/Y', strtotime($item['proxima_cuota'])) : '—') . '</td>
+            </tr>';
+            $i++;
+        }
+
+        $html = $this->pdfHeader('Cartera de Clientes', 'Cobrador: ' . $cobrador->nombre . ' — ' . ($i - 1) . ' registros') . '
+            <table class="data" cellspacing="0" cellpadding="0">
+                <thead><tr>
+                    <th style="width:5%">#</th>
+                    <th style="width:25%">Cliente</th>
+                    <th style="width:11%">DNI</th>
+                    <th style="width:13%">Teléfono</th>
+                    <th style="width:13%">Zona</th>
+                    <th style="width:8%">Créditos</th>
+                    <th style="width:13%">Saldo</th>
+                    <th style="width:12%">Próx. cuota</th>
+                </tr></thead>
+                <tbody>' . $filas . '</tbody>
+                <tfoot><tr>
+                    <td colspan="6" class="right">TOTAL SALDO:</td>
+                    <td class="right">$ ' . number_format($totalSaldo, 0, ',', '.') . '</td>
+                    <td></td>
+                </tr></tfoot>
+            </table>';
+
+        $nombreArchivo = preg_replace('/[^a-z0-9]+/i', '_', $cobrador->nombre);
+        $this->renderPdf($html, 'cartera_' . $nombreArchivo . '_' . date('Y-m-d') . '.pdf');
     }
 
     public function exportCreditosPdf(string $search = '', string $estado = ''): void

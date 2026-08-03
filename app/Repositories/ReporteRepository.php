@@ -481,6 +481,38 @@ class ReporteRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Clientes con crédito activo asignado a un cobrador puntual.
+     */
+    public function exportClientesPorCobrador(int $idCobrador): array
+    {
+        $sql = "
+            SELECT
+                c.nombre, c.dni, c.telefono, c.direccion,
+                z.nombre AS zona_nombre,
+                COUNT(DISTINCT cr.id_credito) AS creditos_activos,
+                COALESCE(SUM(cr.saldo_pendiente), 0) AS saldo_total,
+                MIN(CASE
+                    WHEN cu.estado IN ('pendiente','parcial','vencida') THEN cu.fecha_vencimiento
+                    ELSE NULL
+                END) AS proxima_cuota
+            FROM clientes c
+            LEFT JOIN zonas z ON c.id_zona = z.id_zona
+            JOIN creditos cr ON cr.id_cliente = c.id_cliente
+                AND cr.estado = 'activo'
+                AND cr.deleted_at IS NULL
+                AND cr.id_cobrador = ?
+            LEFT JOIN cuotas cu ON cu.id_credito = cr.id_credito
+            WHERE c.deleted_at IS NULL
+            GROUP BY c.id_cliente
+            ORDER BY c.nombre ASC
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$idCobrador]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function exportCreditos(string $search = '', string $estado = ''): array
     {
         $sql = "

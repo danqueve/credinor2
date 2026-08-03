@@ -61,6 +61,7 @@ return [
         '/reportes/exportar/cobranza' => [\App\Controllers\ReporteController::class, 'exportCobranza'],
         '/reportes/exportar/atraso'   => [\App\Controllers\ReporteController::class, 'exportAtraso'],
         '/reportes/exportar/clientes' => [\App\Controllers\ReporteController::class, 'exportClientes'],
+        '/reportes/exportar/clientes-cobrador' => [\App\Controllers\ReporteController::class, 'exportClientesPorCobrador'],
         '/reportes/exportar/creditos' => [\App\Controllers\ReporteController::class, 'exportCreditos'],
         '/reportes/exportar/cobros'   => [\App\Controllers\ReporteController::class, 'exportCobros'],
 
