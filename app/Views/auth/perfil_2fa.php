@@ -1,5 +1,5 @@
 <?php
-$appUrl = $_ENV['APP_URL'] ?? 'http://localhost/credinor2/public';
+$appUrl = url();
 ob_start();
 ?>
 <div class="d-flex justify-content-between align-items-center mb-4">

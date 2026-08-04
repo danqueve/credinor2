@@ -8,9 +8,18 @@
 /storage/logs/*.log
 /storage/uploads/*
 /storage/cache/*
+/storage/recibos/*
+/storage/creditos/*
 !/storage/logs/.gitkeep
 !/storage/uploads/.gitkeep
 !/storage/cache/.gitkeep
+!/storage/recibos/.gitkeep
+!/storage/creditos/.gitkeep
+
+# tempDir de mPDF (storage/cache/mpdf) — mantener el directorio, ignorar el caché que genera
+!/storage/cache/mpdf/
+/storage/cache/mpdf/*
+!/storage/cache/mpdf/.gitkeep
 
 # Backups DB
 /database/backups/*.sql
@@ -24,6 +33,9 @@
 # OS
 .DS_Store
 Thumbs.db
+
+# Caché de PowerShell generada accidentalmente dentro del proyecto
+/Microsoft/
 
 # Archivos con credenciales locales
 datos.txt

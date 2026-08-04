@@ -1,5 +1,5 @@
 <?php
-$appUrl = $_ENV['APP_URL'] ?? '';
+$appUrl = url();
 ob_start();
 
 $cuotasPagadas  = count(array_filter($credito->cuotas, fn($q) => $q->estado === 'pagada'));

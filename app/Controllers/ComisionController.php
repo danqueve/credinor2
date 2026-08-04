@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\Url;
 use App\Helpers\View;
 use App\Services\ComisionService;
 
@@ -82,8 +83,7 @@ class ComisionController
 
         $resumen = $this->service->liquidar($desde, $hasta);
         $_SESSION['flash_success'] = "Liquidación {$desde} → {$hasta} generada: {$resumen['filas']} registros — Total $" . number_format($resumen['total_comision'], 2, ',', '.');
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/comisiones?desde=' . $desde . '&hasta=' . $hasta);
-        exit;
+        Url::redirect('/comisiones?desde=' . $desde . '&hasta=' . $hasta);
     }
 
     public function marcarPagada(): void
@@ -98,7 +98,6 @@ class ComisionController
             $this->service->marcarPagada($idComision);
         }
 
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/comisiones?desde=' . $desde . '&hasta=' . $hasta);
-        exit;
+        Url::redirect('/comisiones?desde=' . $desde . '&hasta=' . $hasta);
     }
 }

@@ -1,5 +1,5 @@
 <?php
-$appUrl = $_ENV['APP_URL'] ?? 'http://localhost/credinor2/public';
+$appUrl = url();
 $soloOperativo = (bool)($tienePagos ?? false);
 $personalOption = static fn($p, ?int $selected): string =>
     '<option value="' . (int)$p->id_personal . '"' . ($selected === (int)$p->id_personal ? ' selected' : '') . '>' .

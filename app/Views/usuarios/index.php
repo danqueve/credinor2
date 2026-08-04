@@ -1,5 +1,5 @@
 <?php
-$appUrl = $_ENV['APP_URL'] ?? '';
+$appUrl = url();
 $canManage = \App\Helpers\Auth::canManage();
 ob_start();
 ?>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\Url;
 use App\Helpers\View;
 
 class DashboardController
@@ -21,8 +22,7 @@ class DashboardController
         \App\Helpers\Auth::requireLogin();
 
         if ((\App\Helpers\Auth::user()['rol'] ?? '') === 'cobrador') {
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/consulta');
-            exit;
+            Url::redirect('/consulta');
         }
 
         $data = $this->service->getData();

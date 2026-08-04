@@ -17,8 +17,7 @@ class Auth
             if (self::isAjax()) {
                 Response::json(false, null, ['No autenticado'], 'Acceso denegado', 401);
             } else {
-                header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/login');
-                exit;
+                Url::redirect('/login');
             }
         }
     }
@@ -56,8 +55,7 @@ class Auth
         $rol = Session::get('usuario_rol');
         if (!in_array($rol, ['admin', 'supervisor', 'cobrador'], true)) {
             if ($rol === 'cliente') {
-                header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/mi-cuenta');
-                exit;
+                Url::redirect('/mi-cuenta');
             }
             http_response_code(403);
             require APP_PATH . '/Views/errors/403.php';
@@ -70,8 +68,7 @@ class Auth
     {
         self::requireLogin();
         if (Session::get('usuario_rol') !== 'cliente') {
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/dashboard');
-            exit;
+            Url::redirect('/dashboard');
         }
     }
 

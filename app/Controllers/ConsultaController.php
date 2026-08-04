@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\Url;
 use App\Helpers\Response;
 use App\Helpers\Sanitizer;
 use App\Helpers\View;
@@ -196,15 +197,13 @@ class ConsultaController
         $cliente    = $this->clienteRepo->findById($id);
 
         if (!$cliente) {
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/consulta/buscar');
-            exit;
+            Url::redirect('/consulta/buscar');
         }
 
         if ($personalId) {
             $creditos = $this->creditoRepo->findByClienteAndCobrador($id, $personalId);
             if (empty($creditos)) {
-                header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/consulta/buscar');
-                exit;
+                Url::redirect('/consulta/buscar');
             }
         } else {
             $creditos = $this->creditoRepo->findByCliente($id);
@@ -231,13 +230,11 @@ class ConsultaController
         $credito    = $this->creditoRepo->findById($id);
 
         if (!$credito) {
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/consulta/buscar');
-            exit;
+            Url::redirect('/consulta/buscar');
         }
 
         if ($personalId && !$this->pagoRepo->belongsToCobrador($id, $personalId)) {
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/consulta/buscar');
-            exit;
+            Url::redirect('/consulta/buscar');
         }
 
         $cliente  = $this->clienteRepo->findById($credito->id_cliente);

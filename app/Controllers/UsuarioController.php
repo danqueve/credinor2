@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\Url;
 use App\Helpers\Audit;
 use App\Helpers\Sanitizer;
 use App\Helpers\View;
@@ -58,8 +59,7 @@ class UsuarioController
 
         if (empty($apellido) || empty($nombre) || empty($dni)) {
             $_SESSION['flash_error'] = 'Apellido, nombre y DNI son obligatorios.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios/nuevo');
-            exit;
+            Url::redirect('/usuarios/nuevo');
         }
 
         $hash = password_hash($password, PASSWORD_BCRYPT);
@@ -70,14 +70,12 @@ class UsuarioController
             $_SESSION['flash_error'] = $e->getCode() === '23000'
                 ? "Ya existe un usuario con el DNI/usuario '{$username}'."
                 : 'Error al guardar. Intente nuevamente.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios/nuevo');
-            exit;
+            Url::redirect('/usuarios/nuevo');
         }
 
         Audit::log('crear_usuario', 'usuarios', $id);
         $_SESSION['flash_success'] = "Usuario {$apellido}, {$nombre} creado con éxito.";
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios');
-        exit;
+        Url::redirect('/usuarios');
     }
 
     public function edit(): void
@@ -88,8 +86,7 @@ class UsuarioController
 
         if (!$usuario) {
             $_SESSION['flash_error'] = 'Usuario no encontrado.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios');
-            exit;
+            Url::redirect('/usuarios');
         }
 
         View::render('usuarios/form', [
@@ -118,8 +115,7 @@ class UsuarioController
 
         if (empty($apellido) || empty($nombre) || empty($dni)) {
             $_SESSION['flash_error'] = 'Apellido, nombre y DNI son obligatorios.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios/editar?id=' . $id);
-            exit;
+            Url::redirect('/usuarios/editar?id=' . $id);
         }
 
         $hash = !empty($password) ? password_hash($password, PASSWORD_BCRYPT) : null;
@@ -130,14 +126,12 @@ class UsuarioController
             $_SESSION['flash_error'] = $e->getCode() === '23000'
                 ? "Ya existe otro usuario con ese DNI."
                 : 'Error al actualizar. Intente nuevamente.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios/editar?id=' . $id);
-            exit;
+            Url::redirect('/usuarios/editar?id=' . $id);
         }
 
         Audit::log('editar_usuario', 'usuarios', $id);
         $_SESSION['flash_success'] = 'Usuario actualizado con éxito.';
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios');
-        exit;
+        Url::redirect('/usuarios');
     }
 
     public function delete(): void
@@ -148,14 +142,12 @@ class UsuarioController
         $usuario = $this->repo->findById($id);
         if (!$usuario) {
             $_SESSION['flash_error'] = 'Usuario no encontrado.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios');
-            exit;
+            Url::redirect('/usuarios');
         }
 
         $this->repo->softDelete($id);
         Audit::log('eliminar_usuario', 'usuarios', $id);
         $_SESSION['flash_success'] = 'Usuario eliminado.';
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/usuarios');
-        exit;
+        Url::redirect('/usuarios');
     }
 }

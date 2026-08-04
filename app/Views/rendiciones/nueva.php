@@ -1,5 +1,5 @@
 <?php
-$appUrl = $_ENV['APP_URL'] ?? 'http://localhost/credinor2/public';
+$appUrl = url();
 ob_start();
 
 // Restaurar datos del formulario si venían de un error

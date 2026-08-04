@@ -8,6 +8,7 @@ use App\Helpers\View;
 use App\Helpers\Sanitizer;
 use App\Helpers\Audit;
 use App\Helpers\Auth;
+use App\Helpers\Url;
 use App\Models\Cliente;
 use App\Repositories\ClienteRepository;
 use App\Repositories\CreditoRepository;
@@ -59,8 +60,7 @@ class ClienteController
 
         if (!$cliente) {
             $_SESSION['flash_error'] = 'Cliente no encontrado.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/clientes');
-            exit;
+            Url::redirect('/clientes');
         }
 
         $creditos = $this->creditoRepo->findByCliente($id);
@@ -94,8 +94,7 @@ class ClienteController
 
         if (empty($cliente->nombre) || empty($cliente->dni)) {
             $_SESSION['flash_error'] = 'Nombre y DNI son obligatorios.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/clientes/nuevo');
-            exit;
+            Url::redirect('/clientes/nuevo');
         }
 
         try {
@@ -113,14 +112,13 @@ class ClienteController
             } else {
                 $_SESSION['flash_error'] = 'Error al guardar el cliente. Intente nuevamente.';
             }
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/clientes/nuevo');
-            exit;
+            Url::redirect('/clientes/nuevo');
         }
 
         Audit::log('crear_cliente', 'clientes', $id);
 
         $_SESSION['flash_success'] = 'Cliente registrado con éxito.';
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/clientes/ficha?id=' . $id);
+        Url::redirect('/clientes/ficha?id=' . $id);
     }
 
     public function edit(): void
@@ -131,8 +129,7 @@ class ClienteController
 
         if (!$cliente) {
             $_SESSION['flash_error'] = 'Cliente no encontrado.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/clientes');
-            exit;
+            Url::redirect('/clientes');
         }
 
         $zonas = $this->zonaRepo->findAll();
@@ -154,8 +151,7 @@ class ClienteController
 
         if (empty($cliente->nombre) || empty($cliente->dni)) {
             $_SESSION['flash_error'] = 'Nombre y DNI son obligatorios.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/clientes/editar?id=' . $id);
-            exit;
+            Url::redirect('/clientes/editar?id=' . $id);
         }
 
         try {
@@ -166,14 +162,13 @@ class ClienteController
             } else {
                 $_SESSION['flash_error'] = 'Error al actualizar el cliente. Intente nuevamente.';
             }
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/clientes/editar?id=' . $id);
-            exit;
+            Url::redirect('/clientes/editar?id=' . $id);
         }
 
         Audit::log('editar_cliente', 'clientes', $id);
 
         $_SESSION['flash_success'] = 'Cliente actualizado con éxito.';
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/clientes/ficha?id=' . $id);
+        Url::redirect('/clientes/ficha?id=' . $id);
     }
 
     private function fillFromPost(Cliente $cliente): void

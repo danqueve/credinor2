@@ -8,6 +8,7 @@ use App\Helpers\View;
 use App\Helpers\Sanitizer;
 use App\Helpers\Audit;
 use App\Helpers\Auth;
+use App\Helpers\Url;
 use App\Models\Zona;
 use App\Models\Personal;
 use App\Repositories\ZonaRepository;
@@ -62,8 +63,7 @@ class PersonalController
 
         if (empty($nombre)) {
             $_SESSION['flash_error'] = 'El nombre de la zona es obligatorio.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/zonas/nueva');
-            exit;
+            Url::redirect('/zonas/nueva');
         }
 
         $zona = new Zona();
@@ -74,7 +74,7 @@ class PersonalController
         Audit::log('crear_zona', 'zonas', $id);
 
         $_SESSION['flash_success'] = 'Zona creada con éxito.';
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal');
+        Url::redirect('/personal');
     }
 
     public function editZona(): void
@@ -85,8 +85,7 @@ class PersonalController
 
         if (!$zona) {
             $_SESSION['flash_error'] = 'Zona no encontrada.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal');
-            exit;
+            Url::redirect('/personal');
         }
 
         $personal = $this->personalRepo->findAllActive();
@@ -107,8 +106,7 @@ class PersonalController
 
         if (empty($nombre)) {
             $_SESSION['flash_error'] = 'El nombre de la zona es obligatorio.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/zonas/editar?id=' . $id);
-            exit;
+            Url::redirect('/zonas/editar?id=' . $id);
         }
 
         $zona = new Zona();
@@ -120,7 +118,7 @@ class PersonalController
         Audit::log('editar_zona', 'zonas', $id);
 
         $_SESSION['flash_success'] = 'Zona actualizada con éxito.';
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal');
+        Url::redirect('/personal');
     }
 
     // --- PERSONAL CRUD ---
@@ -152,8 +150,7 @@ class PersonalController
 
         if (empty($empleado->nombre) || empty($empleado->dni)) {
             $_SESSION['flash_error'] = 'El nombre y DNI son obligatorios.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal/nuevo');
-            exit;
+            Url::redirect('/personal/nuevo');
         }
 
         $crearUsuario = !empty($_POST['crear_usuario']);
@@ -163,13 +160,11 @@ class PersonalController
         if ($crearUsuario) {
             if (empty($username) || strlen($password) < 6) {
                 $_SESSION['flash_error'] = 'Para crear acceso, username y contraseña (mínimo 6 caracteres) son obligatorios.';
-                header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal/nuevo');
-                exit;
+                Url::redirect('/personal/nuevo');
             }
             if ($this->usuarioRepo->findByUsername($username)) {
                 $_SESSION['flash_error'] = "El username «{$username}» ya está en uso.";
-                header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal/nuevo');
-                exit;
+                Url::redirect('/personal/nuevo');
             }
         }
 
@@ -182,7 +177,7 @@ class PersonalController
         }
 
         $_SESSION['flash_success'] = 'Empleado creado con éxito.' . ($crearUsuario ? ' Usuario de acceso creado.' : '');
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal');
+        Url::redirect('/personal');
     }
 
     public function editPersonal(): void
@@ -193,8 +188,7 @@ class PersonalController
 
         if (!$empleado) {
             $_SESSION['flash_error'] = 'Empleado no encontrado.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal');
-            exit;
+            Url::redirect('/personal');
         }
 
         $zonas = $this->zonaRepo->findAll();
@@ -223,8 +217,7 @@ class PersonalController
 
         if (empty($empleado->nombre) || empty($empleado->dni)) {
             $_SESSION['flash_error'] = 'El nombre y DNI son obligatorios.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal/editar?id=' . $id);
-            exit;
+            Url::redirect('/personal/editar?id=' . $id);
         }
 
         $this->personalRepo->update($empleado);
@@ -237,22 +230,19 @@ class PersonalController
             $password = $_POST['password_new'] ?? '';
             if (empty($username) || strlen($password) < 6) {
                 $_SESSION['flash_error'] = 'Para crear acceso, username y contraseña (mínimo 6 caracteres) son obligatorios.';
-                header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal/editar?id=' . $id);
-                exit;
+                Url::redirect('/personal/editar?id=' . $id);
             }
             if ($this->usuarioRepo->findByUsername($username)) {
                 $_SESSION['flash_error'] = "El username «{$username}» ya está en uso.";
-                header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal/editar?id=' . $id);
-                exit;
+                Url::redirect('/personal/editar?id=' . $id);
             }
             $hash = password_hash($password, PASSWORD_DEFAULT);
             $this->usuarioRepo->insert($username, $hash, 'cobrador', $id, null, true, null, $empleado->nombre, $empleado->dni);
             $_SESSION['flash_success'] = 'Empleado actualizado con éxito. Usuario de acceso creado.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal');
-            exit;
+            Url::redirect('/personal');
         }
 
         $_SESSION['flash_success'] = 'Empleado actualizado con éxito.';
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/personal');
+        Url::redirect('/personal');
     }
 }

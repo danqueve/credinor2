@@ -180,6 +180,47 @@ class ReporteRepository
     }
 
     /**
+     * Hoja de ruta de un cobrador: cuotas por cobrar en un rango de fechas,
+     * con dirección/barrio y ordenadas por zona para armar el recorrido a pie.
+     * $idZona filtra a una sola zona; null trae todas las del cobrador.
+     */
+    public function getHojaRutaCobrador(int $idCobrador, string $desde, string $hasta, ?int $idZona = null): array
+    {
+        $sql = "
+            SELECT
+                cu.id_cuota, cu.numero_cuota, cu.fecha_vencimiento,
+                (cu.monto_esperado - cu.monto_pagado) AS a_cobrar,
+                cu.estado,
+                cr.codigo AS credito_codigo,
+                (SELECT COUNT(*) FROM cuotas WHERE id_credito = cr.id_credito) AS total_cuotas,
+                cl.nombre AS cliente_nombre, cl.apellido AS cliente_apellido, cl.dni AS cliente_dni,
+                cl.telefono AS cliente_telefono, cl.direccion AS cliente_direccion, cl.barrio AS cliente_barrio,
+                z.id_zona, z.nombre AS zona_nombre
+            FROM cuotas cu
+            JOIN creditos cr ON cu.id_credito = cr.id_credito
+            JOIN clientes cl ON cr.id_cliente = cl.id_cliente
+            LEFT JOIN zonas z ON cl.id_zona = z.id_zona
+            WHERE cu.fecha_vencimiento BETWEEN ? AND ?
+              AND cr.estado = 'activo'
+              AND cr.deleted_at IS NULL
+              AND cr.id_cobrador = ?
+              AND cu.estado NOT IN ('pagada','condonada')
+        ";
+        $params = [$desde, $hasta, $idCobrador];
+
+        if ($idZona !== null) {
+            $sql .= " AND cl.id_zona = ?";
+            $params[] = $idZona;
+        }
+
+        $sql .= " ORDER BY z.nombre ASC, cl.nombre ASC, cu.fecha_vencimiento ASC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Clientes con cuotas atrasadas, con teléfono y dirección para cobranza.
      */
     public function getClientesConAtraso(): array
@@ -448,24 +489,70 @@ class ReporteRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Subquery de "próxima cuota pendiente" por crédito — una fila por id_credito,
+     * con su fecha y el valor de esa cuota. El monto es siempre el importe
+     * completo de la cuota (monto_esperado) — no se resta lo ya abonado, aunque
+     * la cuota esté "parcial", porque "Cuota a pagar" debe reflejar el valor
+     * fijo de la cuota del cliente, no el saldo pendiente para completarla.
+     * Usa ROW_NUMBER() (no un simple MIN+GROUP BY) porque necesitamos el monto
+     * correlacionado con esa fecha exacta, no cualquier monto del crédito.
+     * Una fila por id_credito evita duplicar créditos al unir con clientes/cobradores
+     * (ver exportClientes()).
+     */
+    private function sqlProximaCuotaPorCredito(): string
+    {
+        return "
+            SELECT id_credito, fecha_vencimiento AS proxima, numero_cuota,
+                   monto_esperado AS cuota_monto
+            FROM (
+                SELECT id_credito, fecha_vencimiento, numero_cuota, monto_esperado,
+                       ROW_NUMBER() OVER (PARTITION BY id_credito ORDER BY fecha_vencimiento ASC) AS rn
+                FROM cuotas
+                WHERE estado IN ('pendiente','parcial','vencida')
+            ) t
+            WHERE rn = 1
+        ";
+    }
+
+    /**
+     * Subquery de atraso por crédito — una fila por id_credito.
+     */
+    private function sqlAtrasoPorCredito(): string
+    {
+        return "
+            SELECT id_credito,
+                   COUNT(*) AS cuotas_vencidas,
+                   SUM(monto_esperado - monto_pagado) AS deuda_vencida
+            FROM cuotas
+            WHERE estado IN ('vencida','parcial')
+              AND fecha_vencimiento < CURDATE()
+            GROUP BY id_credito
+        ";
+    }
+
     public function exportClientes(string $search = ''): array
     {
+        // Nota: se agregan "próxima cuota" y "atraso" con subqueries pre-agregadas
+        // por id_credito (una fila por crédito) en vez de unir la tabla cuotas
+        // directamente — unirla fila por fila duplica cada crédito una vez por
+        // cuota y multiplica los totales en los SUM() de más abajo.
         $sql = "
             SELECT
-                c.nombre, c.dni, c.telefono, c.direccion,
+                c.nombre, c.apellido, c.dni, c.telefono, c.direccion, c.barrio,
                 z.nombre AS zona_nombre,
-                COUNT(DISTINCT cr.id_credito) AS creditos_activos,
+                MIN(prox.proxima) AS proxima_cuota,
+                COALESCE(SUM(prox.cuota_monto), 0) AS cuota_a_pagar,
+                SUBSTRING_INDEX(GROUP_CONCAT(CONCAT(prox.numero_cuota, '|', cr.cantidad_cuotas) ORDER BY prox.proxima ASC SEPARATOR ';'), ';', 1) AS cuota_label,
                 COALESCE(SUM(cr.saldo_pendiente), 0) AS saldo_total,
-                MIN(CASE
-                    WHEN cu.estado IN ('pendiente','parcial','vencida') THEN cu.fecha_vencimiento
-                    ELSE NULL
-                END) AS proxima_cuota
+                COALESCE(SUM(atr.cuotas_vencidas), 0) AS cuotas_vencidas
             FROM clientes c
             LEFT JOIN zonas z ON c.id_zona = z.id_zona
             LEFT JOIN creditos cr ON cr.id_cliente = c.id_cliente
                 AND cr.estado = 'activo'
                 AND cr.deleted_at IS NULL
-            LEFT JOIN cuotas cu ON cu.id_credito = cr.id_credito
+            LEFT JOIN (" . $this->sqlProximaCuotaPorCredito() . ") prox ON prox.id_credito = cr.id_credito
+            LEFT JOIN (" . $this->sqlAtrasoPorCredito() . ") atr ON atr.id_credito = cr.id_credito
             WHERE c.deleted_at IS NULL
         ";
         $params = [];
@@ -475,6 +562,51 @@ class ReporteRepository
             $params = [$like, $like, $like];
         }
         $sql .= " GROUP BY c.id_cliente ORDER BY c.nombre ASC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Clientes con crédito activo asignado a un cobrador puntual.
+     * $filtros admite: id_zona (int), solo_atraso (bool).
+     */
+    public function exportClientesPorCobrador(int $idCobrador, array $filtros = []): array
+    {
+        $sql = "
+            SELECT
+                c.nombre, c.apellido, c.dni, c.telefono, c.direccion, c.barrio,
+                z.nombre AS zona_nombre,
+                MIN(prox.proxima) AS proxima_cuota,
+                COALESCE(SUM(prox.cuota_monto), 0) AS cuota_a_pagar,
+                SUBSTRING_INDEX(GROUP_CONCAT(CONCAT(prox.numero_cuota, '|', cr.cantidad_cuotas) ORDER BY prox.proxima ASC SEPARATOR ';'), ';', 1) AS cuota_label,
+                COALESCE(SUM(cr.saldo_pendiente), 0) AS saldo_total,
+                COALESCE(SUM(atr.cuotas_vencidas), 0) AS cuotas_vencidas
+            FROM clientes c
+            LEFT JOIN zonas z ON c.id_zona = z.id_zona
+            JOIN creditos cr ON cr.id_cliente = c.id_cliente
+                AND cr.estado = 'activo'
+                AND cr.deleted_at IS NULL
+                AND cr.id_cobrador = ?
+            LEFT JOIN (" . $this->sqlProximaCuotaPorCredito() . ") prox ON prox.id_credito = cr.id_credito
+            LEFT JOIN (" . $this->sqlAtrasoPorCredito() . ") atr ON atr.id_credito = cr.id_credito
+            WHERE c.deleted_at IS NULL
+        ";
+        $params = [$idCobrador];
+
+        if (!empty($filtros['id_zona'])) {
+            $sql .= " AND c.id_zona = ?";
+            $params[] = (int)$filtros['id_zona'];
+        }
+
+        $sql .= " GROUP BY c.id_cliente";
+
+        if (!empty($filtros['solo_atraso'])) {
+            $sql .= " HAVING cuotas_vencidas > 0";
+        }
+
+        $sql .= " ORDER BY z.nombre ASC, c.nombre ASC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);

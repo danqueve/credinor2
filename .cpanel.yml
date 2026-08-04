@@ -1,0 +1,8 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/a0040079/public_html/credinor/
+    - /bin/cp -R app/. $DEPLOYPATH/app/
+    - /bin/cp -R config/. $DEPLOYPATH/config/
+    - /bin/cp -R public/. $DEPLOYPATH/public/
+    - /bin/cp -f README.md $DEPLOYPATH/README.md

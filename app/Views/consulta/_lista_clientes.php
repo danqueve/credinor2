@@ -1,6 +1,6 @@
 <?php
 // $lista debe estar definida antes de incluir este partial
-$appUrl = $appUrl ?? ($_ENV['APP_URL'] ?? '');
+$appUrl = $appUrl ?? url();
 ?>
 <div class="d-flex flex-column gap-2">
     <?php foreach ($lista as $cl): ?>

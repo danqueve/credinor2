@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\Url;
 use App\Helpers\Session;
 use App\Helpers\View;
 use App\Repositories\ClienteRepository;
@@ -37,8 +38,7 @@ class CuentaClienteController
 
         if (!$cliente) {
             Session::destroy();
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/login');
-            exit;
+            Url::redirect('/login');
         }
 
         $creditos = $this->creditoRepo->findByCliente($idCliente);

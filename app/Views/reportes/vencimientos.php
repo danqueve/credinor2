@@ -1,5 +1,5 @@
 <?php
-$appUrl = $_ENV['APP_URL'] ?? '';
+$appUrl = url();
 $hoy    = new \DateTime('today');
 ob_start();
 ?>

@@ -1,5 +1,5 @@
 <?php
-$appUrl = $_ENV['APP_URL'] ?? '';
+$appUrl = url();
 ob_start();
 
 $creditosActivos    = array_filter($creditos, fn($c) => $c->estado === 'activo');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\Url;
 use App\Helpers\Response;
 use App\Helpers\Sanitizer;
 use App\Helpers\View;
@@ -61,8 +62,7 @@ class RendicionController
 
         if (!$rendicion) {
             $_SESSION['flash_error'] = 'Rendición no encontrada.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/rendiciones');
-            exit;
+            Url::redirect('/rendiciones');
         }
 
         // Cargar pagos de esta rendición
@@ -158,12 +158,10 @@ class RendicionController
         if (!$result['ok']) {
             $_SESSION['flash_error']         = $result['message'];
             $_SESSION['rendicion_form_data'] = json_encode(['header' => $header, 'filas' => $filasSanitizadas]);
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/rendiciones/nueva');
-            exit;
+            Url::redirect('/rendiciones/nueva');
         }
 
         $_SESSION['flash_success'] = $result['message'];
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/rendiciones/ficha?id=' . $result['id_rendicion']);
-        exit;
+        Url::redirect('/rendiciones/ficha?id=' . $result['id_rendicion']);
     }
 }

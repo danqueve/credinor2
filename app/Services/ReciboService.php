@@ -47,8 +47,6 @@ class ReciboService
         $filename  = preg_replace('/[^A-Za-z0-9\-_]/', '_', $numero) . '.pdf';
         $fullPath  = $this->storageDir . '/' . $filename;
 
-        $appUrl = $_ENV['APP_URL'] ?? '';
-
         $html = $this->buildHtml($datos);
         error_log("ReciboService: HTML construido");
 
@@ -59,6 +57,7 @@ class ReciboService
             'margin_right'  => 12,
             'margin_top'    => 12,
             'margin_bottom' => 12,
+            'tempDir'       => (defined('ROOT_PATH') ? ROOT_PATH : dirname(__DIR__, 2)) . '/storage/cache/mpdf',
         ]);
         $mpdf->SetTitle('Recibo ' . $numero);
         error_log("ReciboService: Iniciando WriteHTML...");

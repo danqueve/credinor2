@@ -1,5 +1,5 @@
 <?php
-$appUrl = $_ENV['APP_URL'] ?? 'http://localhost/credinor2/public';
+$appUrl = url();
 ?>
 <!DOCTYPE html>
 <html lang="es" data-bs-theme="dark">

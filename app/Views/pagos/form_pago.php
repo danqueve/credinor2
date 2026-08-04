@@ -1,5 +1,5 @@
 <?php
-$appUrl = $_ENV['APP_URL'] ?? 'http://localhost/credinor2/public';
+$appUrl = url();
 
 $creditoJson = $credito ? json_encode([
     'id_credito'      => $credito->id_credito,

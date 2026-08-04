@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\Url;
 use App\Helpers\Response;
 use App\Helpers\Sanitizer;
 use App\Helpers\View;
@@ -12,6 +13,7 @@ use App\Repositories\CreditoRepository;
 use App\Repositories\ClienteRepository;
 use App\Repositories\PagoRepository;
 use App\Repositories\PersonalRepository;
+use App\Services\CreditoPdfService;
 use App\Services\CreditoService;
 use App\Services\CuotaCalendarioService;
 
@@ -70,8 +72,7 @@ class CreditoController
 
         if (!$credito) {
             $_SESSION['flash_error'] = 'Crédito no encontrado.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos');
-            exit;
+            Url::redirect('/creditos');
         }
 
         $cliente              = $this->clienteRepo->findById($credito->id_cliente);
@@ -87,6 +88,26 @@ class CreditoController
             'pagos'             => $pagos,
             'clienteIncobrable' => $clienteIncobrable,
         ]);
+    }
+
+    public function exportPdf(): void
+    {
+        Auth::requireAdminReadOnly();
+
+        $id = (int)($_GET['id'] ?? 0);
+        $credito = $this->creditoRepo->findById($id);
+
+        if (!$credito) {
+            $_SESSION['flash_error'] = 'Crédito no encontrado.';
+            Url::redirect('/creditos');
+        }
+
+        $cliente = $this->clienteRepo->findById($credito->id_cliente);
+        $pagos = $this->pagoRepo->findByCredito($id);
+
+        $service = new CreditoPdfService();
+        $ruta = $service->generar($credito, $cliente, $pagos);
+        $service->descargar($ruta);
     }
 
     // ── Nuevo crédito ─────────────────────────────────────────────────────────
@@ -142,13 +163,11 @@ class CreditoController
 
         if (!$result['ok']) {
             $_SESSION['flash_error'] = $result['message'];
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos/nuevo?id_cliente=' . $data['id_cliente']);
-            exit;
+            Url::redirect('/creditos/nuevo?id_cliente=' . $data['id_cliente']);
         }
 
         $_SESSION['flash_success'] = $result['message'];
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos/ficha?id=' . $result['id_credito']);
-        exit;
+        Url::redirect('/creditos/ficha?id=' . $result['id_credito']);
     }
 
     // ── Anular crédito (POST) ─────────────────────────────────────────────────
@@ -162,8 +181,7 @@ class CreditoController
 
         if (!$credito || $credito->estado !== 'activo') {
             $_SESSION['flash_error'] = 'Credito no valido para editar.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos');
-            exit;
+            Url::redirect('/creditos');
         }
 
         View::render('creditos/form_editar', [
@@ -199,13 +217,11 @@ class CreditoController
 
         if (!$result['ok']) {
             $_SESSION['flash_error'] = $result['message'];
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos/editar?id=' . $idCredito);
-            exit;
+            Url::redirect('/creditos/editar?id=' . $idCredito);
         }
 
         $_SESSION['flash_success'] = $result['message'];
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos/ficha?id=' . $idCredito);
-        exit;
+        Url::redirect('/creditos/ficha?id=' . $idCredito);
     }
 
     public function anular(): void
@@ -224,8 +240,7 @@ class CreditoController
             $_SESSION['flash_success'] = $result['message'];
         }
 
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos/ficha?id=' . $idCredito);
-        exit;
+        Url::redirect('/creditos/ficha?id=' . $idCredito);
     }
 
     // ── Formulario de refinanciación ──────────────────────────────────────────
@@ -239,8 +254,7 @@ class CreditoController
 
         if (!$credito || $credito->estado !== 'activo') {
             $_SESSION['flash_error'] = 'Crédito no válido para refinanciar.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos');
-            exit;
+            Url::redirect('/creditos');
         }
 
         $personal = $this->personalRepo->findAllActive();
@@ -276,13 +290,11 @@ class CreditoController
 
         if (!$result['ok']) {
             $_SESSION['flash_error'] = $result['message'];
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos/refinanciar?id=' . $idCredito);
-            exit;
+            Url::redirect('/creditos/refinanciar?id=' . $idCredito);
         }
 
         $_SESSION['flash_success'] = $result['message'];
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos/ficha?id=' . $result['id_credito']);
-        exit;
+        Url::redirect('/creditos/ficha?id=' . $result['id_credito']);
     }
 
     // ── Marcar incobrable (POST) ──────────────────────────────────────────────
@@ -300,8 +312,7 @@ class CreditoController
         $credito = $this->creditoRepo->findById($idCredito);
         if ($credito && $this->creditoRepo->clienteTieneIncobrable($credito->id_cliente) && !$override) {
             $_SESSION['flash_error'] = 'El cliente ya tiene un crédito incobrable. Confirme el override para continuar.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos/ficha?id=' . $idCredito);
-            exit;
+            Url::redirect('/creditos/ficha?id=' . $idCredito);
         }
 
         $result = $this->creditoService->marcarIncobrable($idCredito, $motivo, $usuarioId);
@@ -312,7 +323,6 @@ class CreditoController
             $_SESSION['flash_success'] = $result['message'];
         }
 
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos/ficha?id=' . $idCredito);
-        exit;
+        Url::redirect('/creditos/ficha?id=' . $idCredito);
     }
 }

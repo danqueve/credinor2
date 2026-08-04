@@ -4,18 +4,23 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Helpers\Export;
+use App\Helpers\Url;
 use App\Repositories\CajaRepository;
+use App\Repositories\PersonalRepository;
 use App\Repositories\ReporteRepository;
 
 class ReporteService
 {
     private ReporteRepository $repo;
     private CajaRepository $cajaRepo;
+    private PersonalRepository $personalRepo;
 
     public function __construct()
     {
-        $this->repo     = new ReporteRepository();
-        $this->cajaRepo = new CajaRepository();
+        $this->repo         = new ReporteRepository();
+        $this->cajaRepo     = new CajaRepository();
+        $this->personalRepo = new PersonalRepository();
     }
 
     public function getResumenAdmin(): array
@@ -108,71 +113,38 @@ class ReporteService
     {
         $data = $this->repo->getClientesConAtraso();
 
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Clientes con Atraso');
-
         $headers = ['#', 'Cliente', 'DNI', 'Teléfono', 'Dirección', 'Crédito', 'Cuotas Vencidas', 'Deuda Vencida', 'Días Atraso', 'Cobrador', 'Zona'];
-        foreach ($headers as $i => $h) {
-            $sheet->setCellValueByColumnAndRow($i + 1, 1, $h);
-        }
-        $sheet->getStyle('A1:K1')->getFont()->setBold(true);
-
-        $row = 2;
+        $rows = [];
         foreach ($data as $i => $item) {
-            $sheet->setCellValueByColumnAndRow(1,  $row, $i + 1);
-            $sheet->setCellValueByColumnAndRow(2,  $row, $item['cliente_nombre']);
-            $sheet->setCellValueByColumnAndRow(3,  $row, $item['dni']);
-            $sheet->setCellValueByColumnAndRow(4,  $row, $item['telefono'] ?? '');
-            $sheet->setCellValueByColumnAndRow(5,  $row, $item['direccion'] ?? '');
-            $sheet->setCellValueByColumnAndRow(6,  $row, $item['credito_codigo']);
-            $sheet->setCellValueByColumnAndRow(7,  $row, $item['cuotas_vencidas']);
-            $sheet->setCellValueByColumnAndRow(8,  $row, (float)$item['deuda_vencida']);
-            $sheet->setCellValueByColumnAndRow(9,  $row, $item['dias_atraso']);
-            $sheet->setCellValueByColumnAndRow(10, $row, $item['cobrador_nombre'] ?? '');
-            $sheet->setCellValueByColumnAndRow(11, $row, $item['zona_nombre'] ?? '');
-            $row++;
+            $rows[] = [
+                $i + 1,
+                $item['cliente_nombre'],
+                $item['dni'],
+                $item['telefono'] ?? '',
+                $item['direccion'] ?? '',
+                $item['credito_codigo'],
+                $item['cuotas_vencidas'],
+                (float)$item['deuda_vencida'],
+                $item['dias_atraso'],
+                $item['cobrador_nombre'] ?? '',
+                $item['zona_nombre'] ?? '',
+            ];
         }
 
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="clientes_atraso_' . date('Y-m-d') . '.xlsx"');
-        header('Cache-Control: max-age=0');
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        $writer->save('php://output');
-        exit;
+        Export::xlsx($headers, $rows, 'clientes_atraso_' . date('Y-m-d') . '.xlsx', 'Clientes con Atraso', [7 => '#,##0.00']);
     }
 
     public function exportCobranzaExcel(string $desde, string $hasta): void
     {
         $data = $this->repo->getCobranzaPorCobrador($desde, $hasta);
 
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Cobranza');
-
-        $sheet->setCellValue('A1', '#');
-        $sheet->setCellValue('B1', 'Cobrador');
-        $sheet->setCellValue('C1', 'Cantidad Pagos');
-        $sheet->setCellValue('D1', 'Total Cobrado');
-        $sheet->getStyle('A1:D1')->getFont()->setBold(true);
-
-        $row = 2;
+        $headers = ['#', 'Cobrador', 'Cantidad Pagos', 'Total Cobrado'];
+        $rows = [];
         foreach ($data as $i => $item) {
-            $sheet->setCellValue('A' . $row, $i + 1);
-            $sheet->setCellValue('B' . $row, $item['cobrador']);
-            $sheet->setCellValue('C' . $row, $item['cantidad_pagos']);
-            $sheet->setCellValue('D' . $row, $item['total_cobrado']);
-            $sheet->getStyle('D' . $row)->getNumberFormat()->setFormatCode('#,##0.00');
-            $row++;
+            $rows[] = [$i + 1, $item['cobrador'], $item['cantidad_pagos'], (float)$item['total_cobrado']];
         }
 
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="cobranza_' . $desde . '_' . $hasta . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        $writer->save('php://output');
-        exit;
+        Export::xlsx($headers, $rows, 'cobranza_' . $desde . '_' . $hasta . '.xlsx', 'Cobranza', [3 => '#,##0.00']);
     }
 
     // ─── Exportadores PDF ─────────────────────────────────────────────────────
@@ -268,49 +240,169 @@ class ReporteService
     public function exportClientesPdf(string $search = ''): void
     {
         $data = $this->repo->exportClientes($search);
+        $sub = $search !== '' ? 'Filtro: ' . $search : 'Todos los clientes';
+        $html = $this->clientesPdfHtml($data, 'Clientes', $sub);
+        $this->renderPdf($html, 'clientes_' . date('Y-m-d') . '.pdf');
+    }
+
+    public function exportClientesExcel(string $search = ''): void
+    {
+        $data = $this->repo->exportClientes($search);
+        Export::xlsx(
+            $this->clientesExportHeaders(),
+            $this->clientesExportRows($data),
+            'clientes_' . date('Y-m-d') . '.xlsx',
+            'Clientes',
+            [8 => '#,##0.00', 9 => '#,##0.00']
+        );
+    }
+
+    public function exportClientesCsv(string $search = ''): void
+    {
+        $data = $this->repo->exportClientes($search);
+        Export::csv($this->clientesExportHeaders(), $this->clientesExportRows($data), 'clientes_' . date('Y-m-d') . '.csv');
+    }
+
+    /**
+     * Cartera de un cobrador. $filtros admite: id_zona (int), solo_atraso (bool).
+     */
+    public function exportClientesPorCobradorPdf(int $idCobrador, array $filtros = []): void
+    {
+        [$cobrador, $data] = $this->cargarCarteraCobrador($idCobrador, $filtros);
+        $html = $this->clientesPdfHtml($data, 'Cartera de Clientes', 'Cobrador: ' . $cobrador->nombre);
+        $nombreArchivo = preg_replace('/[^a-z0-9]+/i', '_', $cobrador->nombre);
+        $this->renderPdf($html, 'cartera_' . $nombreArchivo . '_' . date('Y-m-d') . '.pdf');
+    }
+
+    public function exportClientesPorCobradorExcel(int $idCobrador, array $filtros = []): void
+    {
+        [$cobrador, $data] = $this->cargarCarteraCobrador($idCobrador, $filtros);
+        $nombreArchivo = preg_replace('/[^a-z0-9]+/i', '_', $cobrador->nombre);
+        Export::xlsx(
+            $this->clientesExportHeaders(),
+            $this->clientesExportRows($data),
+            'cartera_' . $nombreArchivo . '_' . date('Y-m-d') . '.xlsx',
+            'Cartera',
+            [8 => '#,##0.00', 9 => '#,##0.00']
+        );
+    }
+
+    public function exportClientesPorCobradorCsv(int $idCobrador, array $filtros = []): void
+    {
+        [$cobrador, $data] = $this->cargarCarteraCobrador($idCobrador, $filtros);
+        $nombreArchivo = preg_replace('/[^a-z0-9]+/i', '_', $cobrador->nombre);
+        Export::csv($this->clientesExportHeaders(), $this->clientesExportRows($data), 'cartera_' . $nombreArchivo . '_' . date('Y-m-d') . '.csv');
+    }
+
+    /**
+     * @return array{0: \App\Models\Personal, 1: array} [$cobrador, $data]
+     */
+    private function cargarCarteraCobrador(int $idCobrador, array $filtros): array
+    {
+        $cobrador = $this->personalRepo->findById($idCobrador);
+        if (!$cobrador) {
+            $_SESSION['flash_error'] = 'Cobrador no encontrado.';
+            Url::redirect('/personal');
+        }
+
+        return [$cobrador, $this->repo->exportClientesPorCobrador($idCobrador, $filtros)];
+    }
+
+    /** "Apellido, Nombre" — cae a solo nombre si no hay apellido cargado. */
+    private function nombreCompleto(array $item): string
+    {
+        $apellido = trim((string)($item['apellido'] ?? ''));
+        $nombre   = trim((string)($item['nombre'] ?? ''));
+        return $apellido !== '' ? $apellido . ', ' . $nombre : $nombre;
+    }
+
+    /** "18|35" (numero_cuota|cantidad_cuotas, tal como lo arma el SQL) → "Cuota 18/35". */
+    private function formatCuotaLabel(?string $raw): string
+    {
+        if (empty($raw) || !str_contains($raw, '|')) {
+            return '';
+        }
+        [$numero, $total] = explode('|', $raw, 2);
+        return 'Cuota ' . $numero . '/' . $total;
+    }
+
+    /** Tabla HTML compartida entre "Clientes" y "Cartera de un cobrador" — mismas columnas. */
+    private function clientesPdfHtml(array $data, string $titulo, string $subtitulo): string
+    {
         $filas = '';
+        $totalCuota = 0.0;
         $totalSaldo = 0.0;
         $i = 1;
 
         foreach ($data as $item) {
+            $cuota = (float)$item['cuota_a_pagar'];
             $saldo = (float)$item['saldo_total'];
+            $totalCuota += $cuota;
             $totalSaldo += $saldo;
+            $cuotaLabel = $this->formatCuotaLabel($item['cuota_label'] ?? null);
+            $direccion = trim((string)($item['direccion'] ?? ''));
+            $barrio    = trim((string)($item['barrio'] ?? ''));
             $clase = ($i % 2 === 0) ? 'even' : 'odd';
             $filas .= '<tr class="' . $clase . '">
                 <td class="num">' . $i . '</td>
-                <td>' . htmlspecialchars($item['nombre'] ?? '') . '</td>
-                <td>' . htmlspecialchars($item['dni'] ?? '') . '</td>
+                <td>' . htmlspecialchars($this->nombreCompleto($item)) . '<br><small>DNI ' . htmlspecialchars($item['dni'] ?? '') . '</small></td>
                 <td>' . htmlspecialchars($item['telefono'] ?? '—') . '</td>
+                <td>' . htmlspecialchars($direccion !== '' ? $direccion : '—') . ($barrio !== '' ? '<br><small>' . htmlspecialchars($barrio) . '</small>' : '') . '</td>
                 <td>' . htmlspecialchars($item['zona_nombre'] ?? '—') . '</td>
-                <td class="center">' . (int)$item['creditos_activos'] . '</td>
+                <td class="right">' . ($cuotaLabel !== '' ? '<small>' . htmlspecialchars($cuotaLabel) . '</small><br>' : '') . '$ ' . number_format($cuota, 0, ',', '.') . '</td>
                 <td class="right">$ ' . number_format($saldo, 0, ',', '.') . '</td>
                 <td class="center">' . (!empty($item['proxima_cuota']) ? date('d/m/Y', strtotime($item['proxima_cuota'])) : '—') . '</td>
             </tr>';
             $i++;
         }
 
-        $sub = $search !== '' ? 'Filtro: ' . $search : 'Todos los clientes';
-        $html = $this->pdfHeader('Clientes', $sub . ' — ' . ($i - 1) . ' registros') . '
+        return $this->pdfHeader($titulo, $subtitulo . ' — ' . ($i - 1) . ' registros') . '
             <table class="data" cellspacing="0" cellpadding="0">
                 <thead><tr>
-                    <th style="width:5%">#</th>
-                    <th style="width:25%">Cliente</th>
-                    <th style="width:11%">DNI</th>
-                    <th style="width:13%">Teléfono</th>
-                    <th style="width:13%">Zona</th>
-                    <th style="width:8%">Créditos</th>
-                    <th style="width:13%">Saldo</th>
-                    <th style="width:12%">Próx. cuota</th>
+                    <th style="width:4%">#</th>
+                    <th style="width:20%">Cliente</th>
+                    <th style="width:10%">Teléfono</th>
+                    <th style="width:20%">Dirección</th>
+                    <th style="width:9%">Zona</th>
+                    <th style="width:14%">Cuota a pagar</th>
+                    <th style="width:12%">Saldo</th>
+                    <th style="width:11%">Próx. cuota</th>
                 </tr></thead>
                 <tbody>' . $filas . '</tbody>
                 <tfoot><tr>
-                    <td colspan="6" class="right">TOTAL SALDO:</td>
+                    <td colspan="5" class="right">TOTALES:</td>
+                    <td class="right">$ ' . number_format($totalCuota, 0, ',', '.') . '</td>
                     <td class="right">$ ' . number_format($totalSaldo, 0, ',', '.') . '</td>
                     <td></td>
                 </tr></tfoot>
             </table>';
+    }
 
-        $this->renderPdf($html, 'clientes_' . date('Y-m-d') . '.pdf');
+    /** @return string[] */
+    private function clientesExportHeaders(): array
+    {
+        return ['#', 'Apellido y Nombre', 'DNI', 'Teléfono', 'Dirección', 'Barrio', 'Zona', 'N° Cuota', 'Cuota a Pagar', 'Saldo', 'Próx. Cuota'];
+    }
+
+    private function clientesExportRows(array $data): array
+    {
+        $rows = [];
+        foreach ($data as $i => $item) {
+            $rows[] = [
+                $i + 1,
+                $this->nombreCompleto($item),
+                $item['dni'] ?? '',
+                $item['telefono'] ?? '',
+                $item['direccion'] ?? '',
+                $item['barrio'] ?? '',
+                $item['zona_nombre'] ?? '',
+                str_replace('|', '/', (string)($item['cuota_label'] ?? '')),
+                (float)$item['cuota_a_pagar'],
+                (float)$item['saldo_total'],
+                !empty($item['proxima_cuota']) ? date('d/m/Y', strtotime($item['proxima_cuota'])) : '',
+            ];
+        }
+        return $rows;
     }
 
     public function exportCreditosPdf(string $search = '', string $estado = ''): void
@@ -368,6 +460,38 @@ class ReporteService
         $this->renderPdf($html, 'creditos_' . date('Y-m-d') . '.pdf');
     }
 
+    public function exportCreditosExcel(string $search = '', string $estado = ''): void
+    {
+        $data = $this->repo->exportCreditos($search, $estado);
+        $headers = ['#', 'Código', 'Cliente', 'DNI', 'Capital', 'Monto Total', 'Saldo', 'Estado', 'Cobrador', 'Inicio'];
+        $rows = [];
+        foreach ($data as $i => $item) {
+            $rows[] = [
+                $i + 1, $item['codigo'], $item['cliente_nombre'], $item['cliente_dni'],
+                (float)$item['capital'], (float)$item['monto_total'], (float)$item['saldo_pendiente'],
+                ucfirst((string)$item['estado']), $item['cobrador_nombre'] ?? '',
+                date('d/m/Y', strtotime($item['fecha_inicio'])),
+            ];
+        }
+        Export::xlsx($headers, $rows, 'creditos_' . date('Y-m-d') . '.xlsx', 'Créditos', [4 => '#,##0.00', 5 => '#,##0.00', 6 => '#,##0.00']);
+    }
+
+    public function exportCreditosCsv(string $search = '', string $estado = ''): void
+    {
+        $data = $this->repo->exportCreditos($search, $estado);
+        $headers = ['#', 'Código', 'Cliente', 'DNI', 'Capital', 'Monto Total', 'Saldo', 'Estado', 'Cobrador', 'Inicio'];
+        $rows = [];
+        foreach ($data as $i => $item) {
+            $rows[] = [
+                $i + 1, $item['codigo'], $item['cliente_nombre'], $item['cliente_dni'],
+                (float)$item['capital'], (float)$item['monto_total'], (float)$item['saldo_pendiente'],
+                ucfirst((string)$item['estado']), $item['cobrador_nombre'] ?? '',
+                date('d/m/Y', strtotime($item['fecha_inicio'])),
+            ];
+        }
+        Export::csv($headers, $rows, 'creditos_' . date('Y-m-d') . '.csv');
+    }
+
     public function exportCobrosPdf(string $search = '', string $desde = '', string $hasta = ''): void
     {
         $data = $this->repo->exportCobros($search, $desde, $hasta);
@@ -421,6 +545,210 @@ class ReporteService
             </table>';
 
         $this->renderPdf($html, 'cobros_' . date('Y-m-d') . '.pdf');
+    }
+
+    public function exportCobrosExcel(string $search = '', string $desde = '', string $hasta = ''): void
+    {
+        $data = $this->repo->exportCobros($search, $desde, $hasta);
+        Export::xlsx($this->cobrosExportHeaders(), $this->cobrosExportRows($data), 'cobros_' . date('Y-m-d') . '.xlsx', 'Cobros', [4 => '#,##0.00']);
+    }
+
+    public function exportCobrosCsv(string $search = '', string $desde = '', string $hasta = ''): void
+    {
+        $data = $this->repo->exportCobros($search, $desde, $hasta);
+        Export::csv($this->cobrosExportHeaders(), $this->cobrosExportRows($data), 'cobros_' . date('Y-m-d') . '.csv');
+    }
+
+    /** @return string[] */
+    private function cobrosExportHeaders(): array
+    {
+        return ['#', 'Fecha', 'Cliente', 'DNI', 'Monto', 'Crédito', 'Forma de pago', 'Cobrador', 'Estado'];
+    }
+
+    private function cobrosExportRows(array $data): array
+    {
+        $rows = [];
+        foreach ($data as $i => $item) {
+            $rows[] = [
+                $i + 1,
+                date('d/m/Y', strtotime($item['fecha_pago_real'])),
+                $item['cliente_nombre'],
+                $item['cliente_dni'],
+                (float)$item['monto_pagado'],
+                $item['credito_codigo'],
+                ucfirst(str_replace('_', ' ', (string)$item['forma_pago'])),
+                $item['cobrador_nombre'] ?? '',
+                (bool)$item['anulado'] ? 'Anulado' : 'Vigente',
+            ];
+        }
+        return $rows;
+    }
+
+    // ─── Hoja de ruta ───────────────────────────────────────────────────────────
+
+    /**
+     * Hoja de ruta diaria de un cobrador: cuotas por cobrar en el rango de
+     * fechas, ordenadas por zona para armar el recorrido a pie.
+     * $filtros admite: id_zona (int|null).
+     */
+    public function exportHojaRutaPdf(int $idCobrador, string $desde, string $hasta, array $filtros = []): void
+    {
+        [$cobrador, $data] = $this->cargarHojaRuta($idCobrador, $desde, $hasta, $filtros);
+        $html = $this->buildHojaRutaHtml($data, [
+            'cobrador_nombre' => $cobrador->nombre,
+            'desde'           => $desde,
+            'hasta'           => $hasta,
+        ]);
+        $nombreArchivo = preg_replace('/[^a-z0-9]+/i', '_', $cobrador->nombre);
+        $this->renderPdf($html, 'hoja_ruta_' . $nombreArchivo . '_' . date('Y-m-d', strtotime($desde)) . '.pdf');
+    }
+
+    public function exportHojaRutaExcel(int $idCobrador, string $desde, string $hasta, array $filtros = []): void
+    {
+        [$cobrador, $data] = $this->cargarHojaRuta($idCobrador, $desde, $hasta, $filtros);
+        $nombreArchivo = preg_replace('/[^a-z0-9]+/i', '_', $cobrador->nombre);
+        Export::xlsx(
+            $this->hojaRutaExportHeaders(),
+            $this->hojaRutaExportRows($data),
+            'hoja_ruta_' . $nombreArchivo . '_' . date('Y-m-d', strtotime($desde)) . '.xlsx',
+            'Hoja de Ruta',
+            [10 => '#,##0.00']
+        );
+    }
+
+    public function exportHojaRutaCsv(int $idCobrador, string $desde, string $hasta, array $filtros = []): void
+    {
+        [$cobrador, $data] = $this->cargarHojaRuta($idCobrador, $desde, $hasta, $filtros);
+        $nombreArchivo = preg_replace('/[^a-z0-9]+/i', '_', $cobrador->nombre);
+        Export::csv($this->hojaRutaExportHeaders(), $this->hojaRutaExportRows($data), 'hoja_ruta_' . $nombreArchivo . '_' . date('Y-m-d', strtotime($desde)) . '.csv');
+    }
+
+    /**
+     * Arma el HTML de la hoja de ruta: agrupado por zona, con subtotal por
+     * zona y total general. Público — mismo patrón testeable que
+     * CreditoPdfService::buildHtml(), ver tests/Unit/HojaRutaHtmlTest.php.
+     *
+     * @param array $meta  ['cobrador_nombre' => string, 'desde' => string, 'hasta' => string]
+     */
+    public function buildHojaRutaHtml(array $data, array $meta): string
+    {
+        $filas = '';
+        $totalGeneral = 0.0;
+        $i = 1;
+        $zonaActual = false; // distinto de null: fuerza el primer encabezado de zona
+        $subtotalZona = 0.0;
+
+        $cerrarZona = function () use (&$filas, &$zonaActual, &$subtotalZona) {
+            if ($zonaActual !== false) {
+                $filas .= '<tr class="subtotal-zona"><td colspan="6" class="right">Subtotal ' . htmlspecialchars($zonaActual) . ':</td>'
+                    . '<td class="right">$ ' . number_format($subtotalZona, 0, ',', '.') . '</td><td></td></tr>';
+            }
+        };
+
+        foreach ($data as $item) {
+            $zona = $item['zona_nombre'] ?? 'Sin zona';
+            if ($zona !== $zonaActual) {
+                $cerrarZona();
+                $filas .= '<tr class="zona-header"><td colspan="8">' . htmlspecialchars($zona) . '</td></tr>';
+                $zonaActual = $zona;
+                $subtotalZona = 0.0;
+            }
+
+            $aCobrar = (float)$item['a_cobrar'];
+            $subtotalZona += $aCobrar;
+            $totalGeneral += $aCobrar;
+
+            $apellido  = trim((string)($item['cliente_apellido'] ?? ''));
+            $nombre    = $apellido !== '' ? $apellido . ', ' . $item['cliente_nombre'] : $item['cliente_nombre'];
+            $direccion = trim((string)($item['cliente_direccion'] ?? ''));
+            $barrio    = trim((string)($item['cliente_barrio'] ?? ''));
+
+            $clase = ($i % 2 === 0) ? 'even' : 'odd';
+            $filas .= '<tr class="' . $clase . '">
+                <td class="num">' . $i . '</td>
+                <td>' . htmlspecialchars($nombre) . '</td>
+                <td>' . htmlspecialchars($direccion !== '' ? $direccion : '—') . ($barrio !== '' ? '<br><small>' . htmlspecialchars($barrio) . '</small>' : '') . '</td>
+                <td>' . htmlspecialchars($item['cliente_telefono'] ?? '—') . '</td>
+                <td>' . htmlspecialchars($item['credito_codigo']) . '<br><small>Cuota ' . (int)$item['numero_cuota'] . '/' . (int)$item['total_cuotas'] . '</small></td>
+                <td class="center">' . date('d/m/Y', strtotime($item['fecha_vencimiento'])) . '</td>
+                <td class="right">$ ' . number_format($aCobrar, 0, ',', '.') . '</td>
+                <td class="firma"></td>
+            </tr>';
+            $i++;
+        }
+        $cerrarZona();
+
+        $totalRegistros = $i - 1;
+        if ($totalRegistros === 0) {
+            $filas = '<tr><td colspan="8" class="center">Sin cuotas por cobrar en el período seleccionado.</td></tr>';
+        }
+
+        $subtitulo = 'Cobrador: ' . $meta['cobrador_nombre'] . ' — '
+            . date('d/m/Y', strtotime($meta['desde'])) . ' al ' . date('d/m/Y', strtotime($meta['hasta']));
+
+        return $this->pdfHeader('Hoja de Ruta', $subtitulo . ' — ' . $totalRegistros . ' cuotas') . '
+            <table class="data ruta" cellspacing="0" cellpadding="0">
+                <thead><tr>
+                    <th style="width:4%">#</th>
+                    <th style="width:19%">Cliente</th>
+                    <th style="width:22%">Dirección</th>
+                    <th style="width:11%">Teléfono</th>
+                    <th style="width:14%">Crédito</th>
+                    <th style="width:9%">Vence</th>
+                    <th style="width:11%">A cobrar</th>
+                    <th style="width:10%">Firma</th>
+                </tr></thead>
+                <tbody>' . $filas . '</tbody>
+                <tfoot><tr>
+                    <td colspan="6" class="right">TOTAL A COBRAR:</td>
+                    <td class="right">$ ' . number_format($totalGeneral, 0, ',', '.') . '</td>
+                    <td></td>
+                </tr></tfoot>
+            </table>';
+    }
+
+    /**
+     * @return array{0: \App\Models\Personal, 1: array} [$cobrador, $data]
+     */
+    private function cargarHojaRuta(int $idCobrador, string $desde, string $hasta, array $filtros): array
+    {
+        $cobrador = $this->personalRepo->findById($idCobrador);
+        if (!$cobrador) {
+            $_SESSION['flash_error'] = 'Cobrador no encontrado.';
+            Url::redirect('/personal');
+        }
+
+        $idZona = !empty($filtros['id_zona']) ? (int)$filtros['id_zona'] : null;
+        return [$cobrador, $this->repo->getHojaRutaCobrador($idCobrador, $desde, $hasta, $idZona)];
+    }
+
+    /** @return string[] */
+    private function hojaRutaExportHeaders(): array
+    {
+        return ['#', 'Cliente', 'DNI', 'Dirección', 'Barrio', 'Teléfono', 'Zona', 'Crédito', 'Cuota', 'Vence', 'A cobrar'];
+    }
+
+    private function hojaRutaExportRows(array $data): array
+    {
+        $rows = [];
+        foreach ($data as $i => $item) {
+            $apellido = trim((string)($item['cliente_apellido'] ?? ''));
+            $nombre   = $apellido !== '' ? $apellido . ', ' . $item['cliente_nombre'] : $item['cliente_nombre'];
+            $rows[] = [
+                $i + 1,
+                $nombre,
+                $item['cliente_dni'],
+                $item['cliente_direccion'] ?? '',
+                $item['cliente_barrio'] ?? '',
+                $item['cliente_telefono'] ?? '',
+                $item['zona_nombre'] ?? '',
+                $item['credito_codigo'],
+                $item['numero_cuota'] . '/' . $item['total_cuotas'],
+                date('d/m/Y', strtotime($item['fecha_vencimiento'])),
+                (float)$item['a_cobrar'],
+            ];
+        }
+        return $rows;
     }
 
     // ─── Helpers privados ─────────────────────────────────────────────────────
@@ -477,6 +805,27 @@ class ReporteService
             .center { text-align: center; }
             .anulado { color: #b45309; }
             small { font-size: 6.5px; color: #6b7280; }
+
+            /* ── Hoja de ruta: agrupado por zona ── */
+            table.ruta tr.zona-header td {
+                background-color: #dbeafe;
+                color: #1e3a5f;
+                font-weight: bold;
+                font-size: 8px;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+                padding: 5px 5px;
+                border-bottom: 1px solid #93c5fd;
+            }
+            table.ruta tr.subtotal-zona td {
+                background-color: #f0f4f8;
+                font-weight: bold;
+                font-size: 8px;
+                color: #1e3a5f;
+                padding: 4px 5px;
+                border-bottom: 2px solid #cbd5e1;
+            }
+            table.ruta td.firma { border-bottom: 1px solid #9ca3af; }
         </style>';
     }
 
@@ -505,6 +854,7 @@ class ReporteService
             'margin_bottom' => 16,
             'margin_left'   => 14,
             'margin_right'  => 14,
+            'tempDir'       => (defined('ROOT_PATH') ? ROOT_PATH : dirname(__DIR__, 2)) . '/storage/cache/mpdf',
         ]);
 
         $mpdf->SetHTMLFooter(

@@ -1,5 +1,5 @@
 <?php
-$appUrl = $_ENV['APP_URL'] ?? 'http://localhost/credinor2/public';
+$appUrl = url();
 
 $creditosActivos  = array_filter($creditos ?? [], fn($c) => $c->estado === 'activo');
 $creditosHistorial = array_filter($creditos ?? [], fn($c) => $c->estado !== 'activo');

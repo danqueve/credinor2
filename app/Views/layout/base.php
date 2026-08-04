@@ -1,11 +1,5 @@
 <?php
-$scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$scriptDir = $scriptDir === '' ? '' : $scriptDir;
-$appUrl = $_ENV['APP_URL'] ?? '';
-if (empty($appUrl)) {
-    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $appUrl = $scheme . '://' . $_SERVER['HTTP_HOST'] . $scriptDir;
-}
+$appUrl = url();
 $user = \App\Helpers\Auth::user();
 ?>
 <!DOCTYPE html>
@@ -61,7 +55,7 @@ $user = \App\Helpers\Auth::user();
     
     <!-- App JS -->
     <script>
-        const APP_URL = '<?= $appUrl ?>';
+        const APP_URL = <?= json_encode($appUrl) ?>;
         const CSRF_TOKEN = '<?= \App\Helpers\Csrf::getToken() ?>';
     </script>
     <script src="<?= $appUrl ?>/assets/js/app.js"></script>

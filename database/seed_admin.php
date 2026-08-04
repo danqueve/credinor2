@@ -2,13 +2,29 @@
 /**
  * Crea el usuario admin inicial.
  * Ejecutar UNA sola vez: php database/seed_admin.php
+ *
+ * Lee la conexión del .env del proyecto (igual que database/setup.php) —
+ * nunca hardcodear credenciales acá, sea local o producción.
  */
+require __DIR__ . '/../vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->load();
+
+$host = $_ENV['DB_HOST'] ?? 'localhost';
+$port = $_ENV['DB_PORT'] ?? '3306';
+$db   = $_ENV['DB_NAME'] ?? 'credinor2';
+$user = $_ENV['DB_USER'] ?? 'root';
+$pass = $_ENV['DB_PASS'] ?? '';
+
 $username = 'admin';
-$password = 'Credinor2026!';  // Cambiarlo después del primer login
+$password = bin2hex(random_bytes(6));  // contraseña aleatoria — se imprime una sola vez
 $rol      = 'admin';
 
 try {
-    $pdo  = new PDO('mysql:host=localhost;port=3306;dbname=a0040079_credin;charset=utf8mb4', 'a0040079_credin', 'GEvulagu62');
+    $pdo  = new PDO("mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4", $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    ]);
     $hash = password_hash($password, PASSWORD_ARGON2ID);
 
     $stmt = $pdo->prepare(

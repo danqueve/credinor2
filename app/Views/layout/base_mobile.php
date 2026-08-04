@@ -1,5 +1,5 @@
 <?php
-$appUrl = $_ENV['APP_URL'] ?? '';
+$appUrl = url();
 $user   = \App\Helpers\Auth::user();
 ?>
 <!DOCTYPE html>
@@ -142,7 +142,7 @@ $waText   = urlencode('Hola, soy ' . $waNombre . ' (Credinor). Necesito ayuda.')
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const APP_URL = '<?= $appUrl ?>';
+    const APP_URL = <?= json_encode($appUrl) ?>;
     const CSRF_TOKEN = '<?= \App\Helpers\Csrf::getToken() ?>';
     // Registrar service worker
     if ('serviceWorker' in navigator) {

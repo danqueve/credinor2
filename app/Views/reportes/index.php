@@ -1,5 +1,5 @@
 <?php
-$appUrl = $_ENV['APP_URL'] ?? '';
+$appUrl = url();
 ob_start();
 $d = $filtros['desde'];
 $h = $filtros['hasta'];
@@ -33,6 +33,12 @@ $tipoBadge = [
         <a href="<?= $appUrl ?>/reportes/exportar/cobros?format=pdf&desde=<?= urlencode($d) ?>&hasta=<?= urlencode($h) ?>" class="btn btn-sm btn-outline-danger" target="_blank" rel="noopener">
             <i class="bi bi-file-pdf me-1"></i>Cobros
         </a>
+        <a href="<?= $appUrl ?>/reportes/exportar/atraso?format=xlsx" class="btn btn-sm btn-outline-warning" target="_blank" rel="noopener">
+            <i class="bi bi-file-earmark-excel me-1"></i>Atraso
+        </a>
+        <a href="<?= $appUrl ?>/reportes/exportar/cobranza?format=xlsx&desde=<?= urlencode($d) ?>&hasta=<?= urlencode($h) ?>" class="btn btn-sm btn-outline-warning" target="_blank" rel="noopener">
+            <i class="bi bi-file-earmark-excel me-1"></i>Cobranza
+        </a>
     <form action="<?= $appUrl ?>/reportes" method="GET" class="d-flex gap-2 align-items-center flex-wrap">
         <input type="date" name="desde" class="form-control form-control-sm bg-slate-800 border-secondary text-light" value="<?= $d ?>">
         <span class="text-secondary small">—</span>
@@ -41,6 +47,95 @@ $tipoBadge = [
     </form>
     </div>
 </div>
+
+<!-- Exportaciones para cobradores: hoja de ruta diaria + cartera de clientes -->
+<div class="card bg-slate-800 border-secondary mb-4">
+    <div class="card-header bg-transparent border-secondary py-3">
+        <h5 class="mb-0 text-light"><i class="bi bi-signpost-split me-2 text-info"></i>Exportaciones para Cobradores</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-3">
+                <label class="form-label text-secondary small mb-1">Cobrador</label>
+                <select id="expCobrador" class="form-select form-select-sm bg-slate-800 border-secondary text-light">
+                    <option value="">Seleccionar...</option>
+                    <?php foreach ($cobradores as $c): ?>
+                        <option value="<?= (int)$c->id_personal ?>"><?= htmlspecialchars($c->nombre) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label text-secondary small mb-1">Zona</label>
+                <select id="expZona" class="form-select form-select-sm bg-slate-800 border-secondary text-light">
+                    <option value="">Todas</option>
+                    <?php foreach ($zonas as $z): ?>
+                        <option value="<?= (int)$z->id_zona ?>"><?= htmlspecialchars($z->nombre) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label text-secondary small mb-1">Desde</label>
+                <input type="date" id="expDesde" class="form-control form-control-sm bg-slate-800 border-secondary text-light" value="<?= date('Y-m-d') ?>">
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label text-secondary small mb-1">Hasta</label>
+                <input type="date" id="expHasta" class="form-control form-control-sm bg-slate-800 border-secondary text-light" value="<?= date('Y-m-d') ?>">
+            </div>
+            <div class="col-6 col-md-3 form-check pt-2">
+                <input class="form-check-input" type="checkbox" id="expSoloAtraso">
+                <label class="form-check-label text-secondary small" for="expSoloAtraso">Solo cartera con atraso</label>
+            </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+            <div class="col-12 col-md-6">
+                <div class="small text-secondary mb-1"><i class="bi bi-signpost-split me-1"></i>Hoja de Ruta (cuotas a cobrar en el rango)</div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="exportarCobrador('hoja-ruta','pdf')"><i class="bi bi-file-pdf me-1"></i>PDF</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="exportarCobrador('hoja-ruta','xlsx')"><i class="bi bi-file-earmark-excel me-1"></i>Excel</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="exportarCobrador('hoja-ruta','csv')"><i class="bi bi-filetype-csv me-1"></i>CSV</button>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="small text-secondary mb-1"><i class="bi bi-people me-1"></i>Cartera de Clientes (todos los créditos activos)</div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="exportarCobrador('cartera','pdf')"><i class="bi bi-file-pdf me-1"></i>PDF</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="exportarCobrador('cartera','xlsx')"><i class="bi bi-file-earmark-excel me-1"></i>Excel</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="exportarCobrador('cartera','csv')"><i class="bi bi-filetype-csv me-1"></i>CSV</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function exportarCobrador(tipo, formato) {
+    const selCobrador = document.getElementById('expCobrador');
+    const idCobrador = selCobrador.value;
+    if (!idCobrador) {
+        selCobrador.classList.add('is-invalid');
+        selCobrador.focus();
+        return;
+    }
+    selCobrador.classList.remove('is-invalid');
+
+    const idZona = document.getElementById('expZona').value;
+    const params = new URLSearchParams({ id_cobrador: idCobrador, format: formato });
+    if (idZona) params.set('id_zona', idZona);
+
+    let endpoint;
+    if (tipo === 'hoja-ruta') {
+        endpoint = '/reportes/exportar/hoja-ruta';
+        params.set('desde', document.getElementById('expDesde').value);
+        params.set('hasta', document.getElementById('expHasta').value);
+    } else {
+        endpoint = '/reportes/exportar/clientes-cobrador';
+        if (document.getElementById('expSoloAtraso').checked) params.set('solo_atraso', '1');
+    }
+
+    window.open(APP_URL + endpoint + '?' + params.toString(), '_blank');
+}
+</script>
 
 <!-- ① Sección Entre Fechas -->
 <p class="text-secondary small text-uppercase fw-semibold mb-2" style="letter-spacing:.07em;">
@@ -113,7 +208,7 @@ $tipoBadge = [
 </p>
 <div class="card bg-slate-800 border-secondary mb-4">
     <div class="table-responsive">
-        <table class="table table-dark table-sm align-middle mb-0">
+        <table class="table table-dark table-sm align-middle mb-0" id="tablaMovimientos">
             <thead>
                 <tr class="text-secondary small text-uppercase">
                     <th>Fecha</th>
@@ -123,12 +218,12 @@ $tipoBadge = [
                     <th>Usuario</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="movimientosBody">
             <?php foreach ($movimientos as $mv):
                 $tb = $tipoBadge[$mv['tipo']] ?? ['class'=>'bg-secondary','icon'=>'bi-circle','label'=>$mv['tipo']];
                 $esEntrada = in_array($mv['tipo'], ['cobranza','ingreso']);
             ?>
-                <tr>
+                <tr class="mov-row">
                     <td class="text-light text-nowrap"><?= date('d/m/Y', strtotime($mv['fecha'])) ?></td>
                     <td>
                         <span class="badge <?= $tb['class'] ?>">
@@ -150,12 +245,74 @@ $tipoBadge = [
             </tbody>
         </table>
     </div>
-    <?php if (count($movimientos) >= 200): ?>
-    <div class="card-footer bg-transparent border-secondary text-secondary small text-center">
-        Mostrando los últimos 200 movimientos del período. Ajustá el rango de fechas para ver más.
+    <div class="card-footer bg-transparent border-secondary py-2" id="movPaginacion" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span class="text-secondary small" id="movInfo"></span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0" id="movPaginas"></ul>
+            </nav>
+        </div>
     </div>
-    <?php endif; ?>
 </div>
+
+<script>
+(function () {
+    const PER_PAGE = 20;
+    const rows = Array.from(document.querySelectorAll('#movimientosBody .mov-row'));
+    const total = rows.length;
+    if (total <= PER_PAGE) return;
+
+    let currentPage = 1;
+    const totalPages = Math.ceil(total / PER_PAGE);
+    const infoEl   = document.getElementById('movInfo');
+    const pagNav   = document.getElementById('movPaginas');
+    const footer   = document.getElementById('movPaginacion');
+
+    footer.style.display = '';
+
+    function render(page) {
+        currentPage = page;
+        const from = (page - 1) * PER_PAGE;
+        const to   = Math.min(from + PER_PAGE, total);
+
+        rows.forEach((r, i) => {
+            r.style.display = (i >= from && i < to) ? '' : 'none';
+        });
+
+        infoEl.textContent = `Mostrando ${from + 1}–${to} de ${total} movimientos`;
+
+        pagNav.innerHTML = '';
+
+        const prev = document.createElement('li');
+        prev.className = 'page-item' + (page === 1 ? ' disabled' : '');
+        prev.innerHTML = '<a class="page-link bg-transparent border-secondary text-secondary" href="#">‹</a>';
+        prev.querySelector('a').addEventListener('click', e => { e.preventDefault(); if (page > 1) render(page - 1); });
+        pagNav.appendChild(prev);
+
+        const maxLinks = 7;
+        let start = Math.max(1, page - Math.floor(maxLinks / 2));
+        let end   = Math.min(totalPages, start + maxLinks - 1);
+        if (end - start < maxLinks - 1) start = Math.max(1, end - maxLinks + 1);
+
+        for (let p = start; p <= end; p++) {
+            const li = document.createElement('li');
+            li.className = 'page-item' + (p === page ? ' active' : '');
+            li.innerHTML = `<a class="page-link bg-transparent border-secondary ${p === page ? 'text-white' : 'text-secondary'}" href="#">${p}</a>`;
+            const pCopy = p;
+            li.querySelector('a').addEventListener('click', e => { e.preventDefault(); render(pCopy); });
+            pagNav.appendChild(li);
+        }
+
+        const next = document.createElement('li');
+        next.className = 'page-item' + (page === totalPages ? ' disabled' : '');
+        next.innerHTML = '<a class="page-link bg-transparent border-secondary text-secondary" href="#">›</a>';
+        next.querySelector('a').addEventListener('click', e => { e.preventDefault(); if (page < totalPages) render(page + 1); });
+        pagNav.appendChild(next);
+    }
+
+    render(1);
+})();
+</script>
 
 <?php
 $content = ob_get_clean();

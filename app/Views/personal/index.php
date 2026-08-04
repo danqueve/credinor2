@@ -1,5 +1,5 @@
 <?php 
-$appUrl = $_ENV['APP_URL'] ?? 'http://localhost/credinor2/public';
+$appUrl = url();
 ob_start(); 
 ?>
 
@@ -117,7 +117,7 @@ ob_start();
                                 <th>Rol Operativo</th>
                                 <th>Zona Asignada</th>
                                 <th>Comisión</th>
-                                <?php if($_SESSION['usuario_rol'] === 'admin'): ?>
+                                <?php if(in_array($_SESSION['usuario_rol'], ['admin', 'supervisor'], true)): ?>
                                     <th class="text-end">Acciones</th>
                                 <?php endif; ?>
                             </tr>
@@ -140,11 +140,24 @@ ob_start();
                                         </td>
                                         <td><?= htmlspecialchars($p->zona_nombre ?? 'Ninguna') ?></td>
                                         <td><?= number_format($p->comision_pct, 2) ?>%</td>
-                                        <?php if($_SESSION['usuario_rol'] === 'admin'): ?>
+                                        <?php if(in_array($_SESSION['usuario_rol'], ['admin', 'supervisor'], true)): ?>
                                             <td class="text-end">
-                                                <a href="<?= $appUrl ?>/personal/editar?id=<?= $p->id_personal ?>" class="btn btn-sm btn-outline-info">
-                                                    <i class="bi bi-pencil"></i> Editar
-                                                </a>
+                                                <?php if($_SESSION['usuario_rol'] === 'admin'): ?>
+                                                    <a href="<?= $appUrl ?>/personal/editar?id=<?= $p->id_personal ?>" class="btn btn-sm btn-outline-info">
+                                                        <i class="bi bi-pencil"></i> Editar
+                                                    </a>
+                                                <?php endif; ?>
+                                                <?php if($p->rol_operativo === 'cobrador'): ?>
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn btn-sm btn-outline-danger dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Exportar PDF">
+                                                            <i class="bi bi-file-earmark-pdf"></i>
+                                                        </button>
+                                                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                                                            <li><a class="dropdown-item" target="_blank" rel="noopener" href="<?= $appUrl ?>/reportes/exportar/clientes-cobrador?id_cobrador=<?= $p->id_personal ?>&format=pdf"><i class="bi bi-file-pdf me-2"></i>Cartera de clientes</a></li>
+                                                            <li><a class="dropdown-item" target="_blank" rel="noopener" href="<?= $appUrl ?>/reportes/exportar/hoja-ruta?id_cobrador=<?= $p->id_personal ?>&desde=<?= date('Y-m-d') ?>&hasta=<?= date('Y-m-d') ?>&format=pdf"><i class="bi bi-file-pdf me-2"></i>Hoja de ruta (hoy)</a></li>
+                                                        </ul>
+                                                    </div>
+                                                <?php endif; ?>
                                             </td>
                                         <?php endif; ?>
                                     </tr>

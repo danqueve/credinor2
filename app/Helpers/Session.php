@@ -10,12 +10,14 @@ class Session
     {
         if (session_status() === PHP_SESSION_NONE) {
             $lifetime = (int)($_ENV['SESSION_LIFETIME'] ?? 1800);
-            
+
+            $basePath = parse_url(Url::base(), PHP_URL_PATH) ?: '/';
+
             session_set_cookie_params([
                 'lifetime' => $lifetime,
-                'path'     => '/',
+                'path'     => $basePath,
                 'domain'   => '',
-                'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+                'secure'   => Url::scheme() === 'https',
                 'httponly' => true,
                 'samesite' => 'Strict',
             ]);

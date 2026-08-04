@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\Url;
 use App\Helpers\Sanitizer;
 use App\Helpers\View;
 use App\Repositories\CreditoRepository;
@@ -107,13 +108,11 @@ class PagoController
 
         if (!$result['ok']) {
             $_SESSION['flash_error'] = $result['message'];
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/pagos/nuevo?id_credito=' . $data['id_credito']);
-            exit;
+            Url::redirect('/pagos/nuevo?id_credito=' . $data['id_credito']);
         }
 
         $_SESSION['flash_success'] = $result['message'];
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos/ficha?id=' . $data['id_credito']);
-        exit;
+        Url::redirect('/creditos/ficha?id=' . $data['id_credito']);
     }
 
     // ── Descargar recibo PDF ──────────────────────────────────────────────────
@@ -157,7 +156,6 @@ class PagoController
             $_SESSION['flash_success'] = $result['message'];
         }
 
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/creditos/ficha?id=' . $idCredito);
-        exit;
+        Url::redirect('/creditos/ficha?id=' . $idCredito);
     }
 }

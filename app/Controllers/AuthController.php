@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\Url;
 use App\Helpers\Csrf;
 use App\Helpers\Session;
 use App\Helpers\Totp;
@@ -23,8 +24,7 @@ class AuthController
     public function showLogin(): void
     {
         if (Auth::isLoggedIn()) {
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/dashboard');
-            exit;
+            Url::redirect('/dashboard');
         }
 
         View::render('auth/login');
@@ -33,8 +33,7 @@ class AuthController
     public function handleLogin(): void
     {
         if (Auth::isLoggedIn()) {
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/dashboard');
-            exit;
+            Url::redirect('/dashboard');
         }
 
         // CSRF ya validado por CsrfMiddleware en routes.php si lo mapeamos (pero por ahora lo llamamos manual o global)
@@ -57,8 +56,7 @@ class AuthController
         $result = $this->authService->login($username, $password);
 
         if ($result['ok'] && ($result['totp_required'] ?? false)) {
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/auth/totp');
-            exit;
+            Url::redirect('/auth/totp');
         }
 
         if ($result['ok']) {
@@ -68,8 +66,7 @@ class AuthController
                 'cobrador' => '/consulta',
                 default    => '/dashboard',
             };
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . $dest);
-            exit;
+            Url::redirect($dest);
         }
 
         View::render('auth/login', ['error' => $result['message'], 'username' => htmlspecialchars($username)]);
@@ -78,8 +75,7 @@ class AuthController
     public function showTotp(): void
     {
         if (!Session::get('totp_pending_id')) {
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/login');
-            exit;
+            Url::redirect('/login');
         }
         View::render('auth/totp');
     }
@@ -87,8 +83,7 @@ class AuthController
     public function handleTotp(): void
     {
         if (!Session::get('totp_pending_id')) {
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/login');
-            exit;
+            Url::redirect('/login');
         }
 
         $token = $_POST['csrf_token'] ?? '';
@@ -102,8 +97,7 @@ class AuthController
 
         if ($result['ok']) {
             // TOTP solo es para admin
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/dashboard');
-            exit;
+            Url::redirect('/dashboard');
         }
 
         View::render('auth/totp', ['error' => $result['message']]);
@@ -133,13 +127,11 @@ class AuthController
         Auth::requireLogin();
         $token = $_POST['csrf_token'] ?? '';
         if (!Csrf::validate($token)) {
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/perfil/2fa');
-            exit;
+            Url::redirect('/perfil/2fa');
         }
         $secret = Totp::generateSecret();
         Session::set('totp_setup_secret', $secret);
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/perfil/2fa');
-        exit;
+        Url::redirect('/perfil/2fa');
     }
 
     public function confirmarSetup2fa(): void
@@ -147,8 +139,7 @@ class AuthController
         Auth::requireLogin();
         $token = $_POST['csrf_token'] ?? '';
         if (!Csrf::validate($token)) {
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/perfil/2fa');
-            exit;
+            Url::redirect('/perfil/2fa');
         }
 
         $code   = trim($_POST['totp_code'] ?? '');
@@ -156,8 +147,7 @@ class AuthController
 
         if (!$secret || !Totp::verify($secret, $code)) {
             $_SESSION['flash_error'] = 'Código incorrecto. Intentá nuevamente.';
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/perfil/2fa');
-            exit;
+            Url::redirect('/perfil/2fa');
         }
 
         $idUsuario = (int)Session::get('usuario_id');
@@ -166,8 +156,7 @@ class AuthController
 
         Session::set('totp_setup_secret', null);
         $_SESSION['flash_success'] = '2FA activado correctamente.';
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/perfil/2fa');
-        exit;
+        Url::redirect('/perfil/2fa');
     }
 
     public function desactivar2fa(): void
@@ -175,8 +164,7 @@ class AuthController
         Auth::requireLogin();
         $token = $_POST['csrf_token'] ?? '';
         if (!Csrf::validate($token)) {
-            header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/perfil/2fa');
-            exit;
+            Url::redirect('/perfil/2fa');
         }
 
         $code   = trim($_POST['totp_code'] ?? '');
@@ -187,8 +175,7 @@ class AuthController
         } else {
             $_SESSION['flash_error'] = $result['message'];
         }
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/perfil/2fa');
-        exit;
+        Url::redirect('/perfil/2fa');
     }
 
     public function logout(): void
@@ -196,7 +183,6 @@ class AuthController
         // Require POST for logout to prevent CSRF pre-fetching? 
         // For simplicity in Phase 1, we allow GET, but best practice is POST.
         $this->authService->logout();
-        header('Location: ' . ($_ENV['APP_URL'] ?? '') . '/login');
-        exit;
+        Url::redirect('/login');
     }
 }

@@ -1,5 +1,5 @@
 <?php
-$appUrl = $_ENV['APP_URL'] ?? '';
+$appUrl = url();
 ob_start();
 
 $cuotasPendientes = count(array_filter($cuotasHoy, fn($c) => $c['estado'] !== 'pagada'));
